@@ -1,0 +1,60 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 class="modal__title">Share a New Idea</h2>
+      <button class="modal__close" (click)="close.emit()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal__body">
+      <!-- Posting as -->
+      @if (currentUser) {
+        <div class="posting-as">
+          <div class="avatar" [style.background]="currentUser.avatarColor" style="width:32px;height:32px;font-size:12px;">
+            {{ currentUser.avatar }}
+          </div>
+          <div>
+            <div class="posting-as__name">{{ currentUser.name }}</div>
+            <div class="posting-as__label">Posting as</div>
+          </div>
+        </div>
+      }
+
+      <!-- Title -->
+      <div class="form-field">
+        <label class="form-label">IDEA TITLE</label>
+        <input [(ngModel)]="form.title" placeholder="Give your idea a compelling title" class="form-input"/>
+      </div>
+
+      <!-- Description -->
+      <div class="form-field">
+        <label class="form-label">DESCRIPTION</label>
+        <textarea [(ngModel)]="form.description"
+          placeholder="Describe your idea — the problem it solves, how it works, why it matters..."
+          rows="5" class="form-input form-textarea"></textarea>
+      </div>
+
+      <!-- Tags -->
+      <div class="form-field">
+        <label class="form-label">TAGS <span class="form-label-hint">(press Enter to add)</span></label>
+        <div class="tags-input-wrap">
+          @for (tag of form.tags; track tag) {
+            <span class="tag-chip">
+              {{ tag }}
+              <span class="tag-chip__remove" (click)="removeTag(tag)">×</span>
+            </span>
+          }
+          <input [(ngModel)]="tagInput" (keydown)="onTagKeydown($event)"
+            [placeholder]="form.tags.length ? '' : 'AI, Mobile, SaaS…'" class="tags-input-field"/>
+        </div>
+      </div>
+
+      <button class="btn-submit" [disabled]="!isValid()" (click)="submit()">
+        Post Idea →
+      </button>
+    </div>
+  </div>
+</div>

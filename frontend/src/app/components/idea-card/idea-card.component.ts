@@ -1,0 +1,30 @@
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Idea } from '../../models/idea.model';
+
+@Component({
+  selector: 'app-idea-card',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './idea-card.component.html',
+  styleUrls: ['./idea-card.component.scss']
+})
+export class IdeaCardComponent {
+  @Input({ required: true }) idea!: Idea;
+  @Input() liked     = false;
+  @Input() favorited = false;
+
+  @Output() like      = new EventEmitter<void>();
+  @Output() share     = new EventEmitter<void>();
+  @Output() favorite  = new EventEmitter<void>();
+  @Output() cardClick = new EventEmitter<void>();
+
+  hovered    = false;
+  shareFlash = false;
+
+  onShare(): void {
+    this.shareFlash = true;
+    this.share.emit();
+    setTimeout(() => this.shareFlash = false, 800);
+  }
+}

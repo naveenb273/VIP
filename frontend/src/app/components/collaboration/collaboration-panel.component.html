@@ -1,0 +1,281 @@
+<div class="collab-panel">
+
+  <!-- Header — no status selector anymore -->
+  <div class="collab-panel__header">
+    <h3 class="collab-panel__title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Collaboration
+    </h3>
+    <span class="collab-member-count">{{ idea.collaborators.length }} member{{ idea.collaborators.length !== 1 ? 's' : '' }}</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="collab-tabs">
+    <button class="collab-tab" [class.collab-tab--active]="activeTab === 'team'" (click)="activeTab = 'team'">
+      Team
+    </button>
+    <button class="collab-tab" [class.collab-tab--active]="activeTab === 'requests'" (click)="activeTab = 'requests'">
+      Requests
+      @if (pendingRequests.length > 0) {
+        <span class="collab-tab__badge">{{ pendingRequests.length }}</span>
+      }
+    </button>
+    <button class="collab-tab" [class.collab-tab--active]="activeTab === 'notes'" (click)="activeTab = 'notes'">
+      Notes
+    </button>
+    <button class="collab-tab" [class.collab-tab--active]="activeTab === 'connect'" (click)="activeTab = 'connect'">
+      Connect
+    </button>
+  </div>
+
+  <!-- ── TAB: TEAM ────────────────────────────────────────────────────── -->
+  @if (activeTab === 'team') {
+    <div class="collab-section">
+      <div class="collab-members">
+        @for (c of idea.collaborators; track c.id) {
+          <div class="collab-member">
+            <div class="avatar" [style.background]="c.avatarColor" style="width:34px;height:34px;font-size:12px;">{{ c.avatar }}</div>
+            <div class="collab-member__info">
+              <span class="collab-member__name">{{ c.name }}</span>
+              <span class="collab-member__role" [ngClass]="'role--' + c.role.toLowerCase()">{{ c.role }}</span>
+            </div>
+            <div class="collab-member__actions">
+              <a [href]="getTeamsLink(c)" target="_blank" class="collab-icon-btn collab-icon-btn--teams" title="Chat on MS Teams">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.5 4h-2.25A2.25 2.25 0 0015 6.25v.75H9.75A2.25 2.25 0 007.5 9.25V10H5.25A2.25 2.25 0 003 12.25v6A2.25 2.25 0 005.25 20.5h14.25A2.25 2.25 0 0021.75 18.25v-12A2.25 2.25 0 0019.5 4z"/>
+                </svg>
+              </a>
+              <a [href]="getOutlookLink(c)" target="_blank" class="collab-icon-btn collab-icon-btn--outlook" title="Email via Outlook">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </a>
+              @if (isOwner && c.role !== 'Owner') {
+                <button class="collab-icon-btn collab-icon-btn--remove" (click)="removeCollaborator(c.id)" title="Remove">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (isOwner) {
+        @if (!showAddForm) {
+          <button class="btn-add-collab" (click)="showAddForm = true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Invite Collaborator
+          </button>
+        } @else {
+          <div class="add-collab-form">
+            <input [(ngModel)]="newCollab.name" placeholder="Name" class="collab-input"/>
+            <div class="collab-email-wrap">
+              <input [(ngModel)]="newCollab.email" placeholder="Email (optional — triggers notification)" class="collab-input"/>
+              @if (newCollab.email.trim()) {
+                <span class="collab-email-hint">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  A notification email will be sent on Add
+                </span>
+              }
+            </div>
+            <select [(ngModel)]="newCollab.role" class="collab-input">
+              <option value="Contributor">Contributor</option>
+              <option value="Reviewer">Reviewer</option>
+            </select>
+            <div class="add-collab-actions">
+              <button class="btn-collab-submit" [disabled]="!newCollab.name.trim()" (click)="submitCollaborator()">Add</button>
+              <button class="btn-collab-cancel" (click)="showAddForm = false; resetForm()">Cancel</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ── TAB: REQUESTS ────────────────────────────────────────────────── -->
+  @if (activeTab === 'requests') {
+    <div class="collab-section">
+
+      <!-- Owner sees incoming requests -->
+      @if (isOwner) {
+        @if (pendingRequests.length === 0) {
+          <div class="collab-empty">No pending collaboration requests.</div>
+        } @else {
+          @for (req of pendingRequests; track req.id) {
+            <div class="collab-request">
+              <div class="collab-request__top">
+                <div class="avatar" [style.background]="req.requesterAvatarColor" style="width:34px;height:34px;font-size:12px;">{{ req.requesterAvatar }}</div>
+                <div class="collab-request__info">
+                  <span class="collab-request__name">{{ req.requesterName }}</span>
+                  <span class="collab-request__date">{{ req.date | date:'MMM d, y' }}</span>
+                </div>
+              </div>
+              <p class="collab-request__msg">"{{ req.message }}"</p>
+              <div class="collab-request__actions">
+                <button class="btn-accept" (click)="respondRequest(req.id, 'accepted')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Accept
+                </button>
+                <button class="btn-decline" (click)="respondRequest(req.id, 'declined')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Decline
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Show accepted/declined history -->
+        @if (idea.collaborationRequests.length > pendingRequests.length) {
+          <div class="requests-history-label">Past Requests</div>
+          @for (req of idea.collaborationRequests; track req.id) {
+            @if (req.status !== 'pending') {
+              <div class="collab-request collab-request--resolved">
+                <div class="collab-request__top">
+                  <div class="avatar" [style.background]="req.requesterAvatarColor" style="width:28px;height:28px;font-size:10px;">{{ req.requesterAvatar }}</div>
+                  <span class="collab-request__name">{{ req.requesterName }}</span>
+                  <span class="req-status-badge req-status-badge--{{ req.status }}">{{ req.status }}</span>
+                </div>
+              </div>
+            }
+          }
+        }
+      }
+
+      <!-- Non-owner sees send-request form -->
+      @if (!isOwner) {
+        @if (hasRequested) {
+          <div class="request-sent-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Your collaboration request has been sent. The author will review it shortly.
+          </div>
+        } @else {
+          <div class="send-request-form">
+            <div class="send-request-form__label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+              </svg>
+              Request to Collaborate
+            </div>
+            <p class="send-request-form__sub">Tell the author why you'd like to join this idea.</p>
+            <textarea
+              [ngModel]="collabMsg"
+              (ngModelChange)="collabMsgChange.emit($event)"
+              rows="3"
+              placeholder="I'd love to contribute because..."
+              class="collab-input collab-textarea"
+            ></textarea>
+            <button class="btn-send-request" [disabled]="!collabMsg.trim()" (click)="sendRequest.emit()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Send Request
+            </button>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ── TAB: NOTES ────────────────────────────────────────────────────── -->
+  @if (activeTab === 'notes') {
+    <div class="collab-section">
+      @if (pinnedNotes.length > 0) {
+        <div class="notes-pinned-label">📌 Pinned</div>
+      }
+      @for (note of pinnedNotes; track note.id) {
+        <div class="collab-note collab-note--pinned">
+          <div class="collab-note__meta">
+            <div class="avatar" [style.background]="note.avatarColor" style="width:24px;height:24px;font-size:9px;">{{ note.avatar }}</div>
+            <span class="collab-note__author">{{ note.author }}</span>
+            <span class="collab-note__date">{{ note.date | date:'MMM d' }}</span>
+            <button class="note-pin-btn" (click)="togglePin(note.id)" title="Unpin">📌</button>
+          </div>
+          <p class="collab-note__text">{{ note.text }}</p>
+        </div>
+      }
+      @if (unpinnedNotes.length > 0 && pinnedNotes.length > 0) {
+        <div class="notes-pinned-label" style="margin-top:8px">Other Notes</div>
+      }
+      @for (note of unpinnedNotes; track note.id) {
+        <div class="collab-note">
+          <div class="collab-note__meta">
+            <div class="avatar" [style.background]="note.avatarColor" style="width:24px;height:24px;font-size:9px;">{{ note.avatar }}</div>
+            <span class="collab-note__author">{{ note.author }}</span>
+            <span class="collab-note__date">{{ note.date | date:'MMM d' }}</span>
+            <button class="note-pin-btn" (click)="togglePin(note.id)" title="Pin">☆</button>
+          </div>
+          <p class="collab-note__text">{{ note.text }}</p>
+        </div>
+      }
+      @if (idea.collaborationNotes.length === 0) {
+        <div class="collab-empty">No collaboration notes yet.</div>
+      }
+      <div class="add-note-form">
+        <textarea [(ngModel)]="newNoteText" rows="2" placeholder="Add a collaboration note..." class="collab-input collab-textarea"></textarea>
+        <button class="btn-collab-submit" [disabled]="!newNoteText.trim()" (click)="submitNote()" style="margin-top:6px; width:100%">Post Note</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── TAB: CONNECT ──────────────────────────────────────────────────── -->
+  @if (activeTab === 'connect') {
+    <div class="collab-section">
+      <div class="connect-card connect-card--teams">
+        <div class="connect-card__icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--teams-color)">
+            <path d="M19.5 4h-2.25A2.25 2.25 0 0015 6.25V7H9.75A2.25 2.25 0 007.5 9.25V10H5.25A2.25 2.25 0 003 12.25v6A2.25 2.25 0 005.25 20.5h14.25A2.25 2.25 0 0021.75 18.25v-12A2.25 2.25 0 0019.5 4z"/>
+          </svg>
+        </div>
+        <div class="connect-card__body">
+          <div class="connect-card__title">Chat on Microsoft Teams</div>
+          <div class="connect-card__sub">Share this idea in a Teams channel or start a group chat.</div>
+          <a [href]="getTeamsShareLink()" target="_blank" class="connect-btn connect-btn--teams">Open in Teams</a>
+        </div>
+      </div>
+      <div class="connect-card connect-card--outlook">
+        <div class="connect-card__icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--outlook-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div class="connect-card__body">
+          <div class="connect-card__title">Email via Outlook</div>
+          <div class="connect-card__sub">Compose a pre-filled email with subject and full idea summary.</div>
+          <a [href]="getOutlookShareLink()" target="_blank" class="connect-btn connect-btn--outlook">Compose in Outlook</a>
+        </div>
+      </div>
+      <div class="connect-card">
+        <div class="connect-card__icon" style="font-size:20px">👥</div>
+        <div class="connect-card__body">
+          <div class="connect-card__title">Email All Collaborators</div>
+          <div class="connect-card__sub">Send this idea summary to the entire team at once.</div>
+          <a [href]="getTeamEmailLink()" target="_blank" class="connect-btn connect-btn--default">Email Team</a>
+        </div>
+      </div>
+    </div>
+  }
+</div>

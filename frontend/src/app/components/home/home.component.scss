@@ -1,0 +1,20 @@
+.home-header { margin-bottom: 28px; }
+.home-header__title {
+  font-family: var(--font-display); font-size: 30px; font-weight: 800;
+  color: var(--color-text-primary); margin-bottom: 6px;
+}
+.home-header__sub { font-size: 14.5px; color: var(--color-text-muted); }
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+.empty-state { text-align: center; padding: 80px 0; color: var(--color-text-faint); }
+.empty-state__icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state__title { font-size: 17px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
+.empty-state__sub { font-size: 14px; }
+
+@media (max-width: 480px) {
+  .ideas-grid { grid-template-columns: 1fr; }
+  .home-header__title { font-size: 22px; }
+}

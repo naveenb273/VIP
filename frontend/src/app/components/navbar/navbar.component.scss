@@ -1,0 +1,134 @@
+.navbar {
+  background: var(--navbar-bg);
+  border-bottom: 1px solid var(--navbar-border);
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: var(--shadow-nav);
+  transition: background 0.25s, border-color 0.25s;
+}
+.navbar__inner {
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 20px; height: 64px;
+  display: flex; align-items: center; gap: 12px;
+}
+.navbar__brand {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+}
+.navbar__logo {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.navbar__title {
+  font-family: var(--font-display); font-weight: 800; font-size: 20px;
+  color: var(--color-text-primary);
+}
+.navbar__spacer { flex: 1; }
+
+/* Desktop controls */
+.navbar__controls {
+  display: flex; align-items: center; gap: 12px;
+}
+
+/* Search */
+.navbar__search {
+  position: relative; display: flex; align-items: center;
+  &--mobile { width: 100%; }
+}
+.navbar__search-icon {
+  position: absolute; left: 10px;
+  color: var(--color-text-faint); display: flex;
+}
+.navbar__search-input {
+  padding: 8px 12px 8px 32px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  font-size: 13.5px; background: var(--color-surface-2);
+  outline: none; width: 190px;
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
+  &:focus { border-color: var(--color-brand); width: 230px; }
+}
+
+/* Tabs */
+.navbar__tabs {
+  display: flex; background: var(--color-surface-3);
+  border-radius: var(--radius-md); padding: 3px; gap: 2px;
+}
+.navbar__tab {
+  padding: 6px 14px; border-radius: var(--radius-sm); border: none;
+  background: transparent; color: var(--color-text-muted);
+  font-weight: 600; font-size: 13px; transition: all 0.15s;
+  &--active { background: var(--color-surface); color: var(--color-brand); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+}
+
+/* New Idea */
+.btn-new-idea {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: var(--radius-md); border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  font-weight: 700; font-size: 14px;
+  box-shadow: var(--shadow-brand); transition: all 0.15s;
+  &:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.45); }
+}
+
+/* Hamburger */
+.navbar__hamburger {
+  display: none; padding: 6px; border: none;
+  background: transparent; color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+}
+
+/* Mobile menu */
+.navbar__mobile-menu {
+  display: none;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--color-border);
+  flex-direction: column; gap: 10px;
+  background: var(--navbar-bg);
+  animation: slideUp 0.2s ease;
+}
+.navbar__mobile-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar__controls { display: none; }
+  .navbar__hamburger { display: flex; }
+  .navbar__mobile-menu { display: flex; }
+  .navbar__search-input { width: 100%; &:focus { width: 100%; } }
+  .btn-new-idea__text { display: none; }
+  .btn-new-idea { padding: 9px 12px; }
+}
+@media (max-width: 480px) {
+  .navbar__title { display: none; }
+}
+
+/* User menu */
+.navbar__user { position: relative; }
+.navbar__avatar-btn {
+  background: transparent; border: 2px solid transparent; border-radius: 50%;
+  padding: 0; cursor: pointer; display: flex; align-items: center;
+  transition: border-color 0.15s;
+  &:hover { border-color: var(--color-brand); }
+}
+.user-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--color-surface); border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-modal);
+  min-width: 220px; z-index: 300; animation: scaleIn 0.15s ease;
+  transform-origin: top right;
+}
+.user-menu__info { padding: 14px 16px; }
+.user-menu__name  { font-weight: 700; font-size: 14px; color: var(--color-text-primary); }
+.user-menu__email { font-size: 12px; color: var(--color-text-faint); margin-top: 2px; }
+.user-menu__divider { height: 1px; background: var(--color-border); }
+.user-menu__item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 16px; border: none; background: transparent;
+  font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left;
+  transition: background 0.15s;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  &:hover { background: var(--color-surface-2); }
+  &--danger { color: var(--color-like); &:hover { background: var(--color-like-bg); } }
+}
