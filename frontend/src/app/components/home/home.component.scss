@@ -9,11 +9,22 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
 }
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+.skeleton-card {
+  height: 280px; border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-surface-3) 50%, var(--color-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .empty-state { text-align: center; padding: 80px 0; color: var(--color-text-faint); }
-.empty-state__icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state__title { font-size: 17px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
+.empty-state__icon { font-size: 56px; margin-bottom: 16px; }
+.empty-state__title { font-size: 18px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 8px; }
 .empty-state__sub { font-size: 14px; }
-
 @media (max-width: 480px) {
   .ideas-grid { grid-template-columns: 1fr; }
   .home-header__title { font-size: 22px; }

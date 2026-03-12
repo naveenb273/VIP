@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Idea, Collaborator, AzureUser } from '../../models/idea.model';
 import { IdeaService } from '../../services/idea.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-collaboration-panel',
@@ -20,7 +21,8 @@ export class CollaborationPanelComponent {
   @Output() collabMsgChange = new EventEmitter<string>();
   @Output() sendRequest     = new EventEmitter<void>();
 
-  svc = inject(IdeaService);
+  svc    = inject(IdeaService);
+  notifs = inject(NotificationService);
 
   activeTab: 'team' | 'requests' | 'notes' | 'connect' = 'team';
   showAddForm = false;
@@ -35,7 +37,7 @@ export class CollaborationPanelComponent {
   async submitCollaborator(): Promise<void> {
     if (!this.newCollab.name.trim()) return;
     const initials = this.newCollab.name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const colors   = ['#f97316','#3b82f6','#14b8a6','#f43f5e','#8b5cf6','#ec4899','#10b981'];
+    const colors   = ['#003057','#1c4f82','#1a6496','#2e7d8a','#5d4a9c','#8b3a5a','#1a5c3f'];
     const color    = colors[Math.floor(Math.random() * colors.length)];
     await this.svc.addCollaborator(this.idea.id, {
       name: this.newCollab.name.trim(), email: this.newCollab.email.trim(),
@@ -84,7 +86,38 @@ export class CollaborationPanelComponent {
 
   // ── Requests ───────────────────────────────────────────────────────────────
   async respondRequest(reqId: string, status: 'accepted' | 'declined'): Promise<void> {
+    const req = this.idea.collaborationRequests.find(r => r.id === reqId);
     await this.svc.respondToRequest(this.idea.id, reqId, status);
+
+    if (req) {
+      // In-app notification (will be seen by requester if on this device)
+      this.notifs.add({
+        type: status === 'accepted' ? 'collab_accepted' : 'collab_declined',
+        title: status === 'accepted' ? 'Collaboration Accepted!' : 'Collaboration Declined',
+        message: status === 'accepted'
+          ? `Your request to collaborate on "${this.idea.title}" was accepted`
+          : `Your request to collaborate on "${this.idea.title}" was declined`,
+        ideaId: this.idea.id, ideaTitle: this.idea.title,
+        fromUser: this.currentUser?.name, fromAvatar: req.requesterAvatar, fromAvatarColor: req.requesterAvatarColor
+      });
+      // Email notification to the requester
+      this.sendRequestResponseEmail(req.requesterName, status, this.idea.title);
+    }
+  }
+
+  private sendRequestResponseEmail(requesterName: string, status: 'accepted' | 'declined', ideaTitle: string): void {
+    const ownerName = this.currentUser?.name ?? 'The idea owner';
+    const subject   = status === 'accepted'
+      ? encodeURIComponent(`[VIP] Your collaboration request was accepted — "${ideaTitle}"`)
+      : encodeURIComponent(`[VIP] Update on your collaboration request — "${ideaTitle}"`);
+    const body = encodeURIComponent(
+      `Hi ${requesterName},\n\n` +
+      (status === 'accepted'
+        ? `Great news! ${ownerName} has accepted your request to collaborate on "${ideaTitle}". You are now a collaborator on this idea.\n\nOpen VIP to start contributing!`
+        : `${ownerName} has reviewed your collaboration request for "${ideaTitle}" and has decided not to accept it at this time.\n\nYou are welcome to explore other ideas on VIP.`) +
+      `\n\n— VIP Notification`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
   }
 
   // ── Notes ──────────────────────────────────────────────────────────────────

@@ -6,6 +6,9 @@ import { filter } from 'rxjs/operators';
 import { CreateIdeaModalComponent } from '../create-idea-modal/create-idea-modal.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
+
+export type SortMode = 'recent' | 'liked' | 'collaborated';
 
 @Component({
   selector: 'app-navbar',
@@ -16,14 +19,22 @@ import { AuthService } from '../../services/auth.service';
 })
 export class NavbarComponent {
   private router = inject(Router);
-  auth = inject(AuthService);
+  auth   = inject(AuthService);
+  notifs = inject(NotificationService);
 
   isHome         = signal(true);
-  activeFilter   = signal<'all' | 'favorites'>('all');
+  sortMode       = signal<SortMode>('recent');
+  showSortMenu   = signal(false);
   showModal      = signal(false);
   mobileMenuOpen = signal(false);
   showUserMenu   = signal(false);
   searchQuery    = '';
+
+  sortLabels: Record<SortMode, string> = {
+    recent:      '🕒 Recent',
+    liked:       '❤️ Most Liked',
+    collaborated:'🤝 Most Collaborated'
+  };
 
   constructor() {
     this.router.events
@@ -32,16 +43,37 @@ export class NavbarComponent {
         this.isHome.set(e.urlAfterRedirects === '/');
         this.mobileMenuOpen.set(false);
         this.showUserMenu.set(false);
+        this.showSortMenu.set(false);
       });
   }
 
-  setFilter(f: 'all' | 'favorites'): void {
-    this.activeFilter.set(f);
-    window.dispatchEvent(new CustomEvent('ideaflow:filter', { detail: f }));
+  setSort(mode: SortMode): void {
+    this.sortMode.set(mode);
+    this.showSortMenu.set(false);
+    window.dispatchEvent(new CustomEvent('vip:sort', { detail: mode }));
   }
 
   onSearch(q: string): void {
-    window.dispatchEvent(new CustomEvent('ideaflow:search', { detail: q }));
+    window.dispatchEvent(new CustomEvent('vip:search', { detail: q }));
+  }
+
+  goProfile(): void {
+    this.showUserMenu.set(false);
+    this.router.navigate(['/profile']);
+  }
+
+  goNotifications(): void {
+    this.router.navigate(['/notifications']);
+  }
+
+  goDrafts(): void {
+    this.showUserMenu.set(false);
+    this.router.navigate(['/drafts']);
+  }
+
+  goSaved(): void {
+    this.showUserMenu.set(false);
+    this.router.navigate(['/profile'], { queryParams: { tab: 'saved' } });
   }
 
   async logout(): Promise<void> {

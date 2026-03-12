@@ -17,7 +17,7 @@ ideasRouter.get('/:id', (req, res) => {
 
 // POST /api/ideas
 ideasRouter.post('/', (req, res) => {
-  const { title, description, author, authorId, avatar, avatarColor, tags } = req.body;
+  const { title, description, author, authorId, avatar, avatarColor, tags, coverImage, coverPosition } = req.body;
   if (!title?.trim() || !description?.trim() || !author || !authorId)
     return res.status(400).json({ error: 'title, description, author, authorId required' });
 
@@ -29,6 +29,9 @@ ideasRouter.post('/', (req, res) => {
     avatar:      avatar      || author.slice(0, 2).toUpperCase(),
     avatarColor: avatarColor || '#6366f1',
     date: today(), tags: Array.isArray(tags) ? tags : [],
+    coverImage: coverImage || '',
+    coverPosition: coverPosition || '50% 50%',
+    status: 'published',
     attachments: [], likes: 0, shares: 0, comments: [],
     collaborators: [{
       id: uid(), name: author,
@@ -51,10 +54,12 @@ ideasRouter.put('/:id', (req, res) => {
   const idx = db.ideas.findIndex(i => i.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Idea not found' });
 
-  const { title, description, tags } = req.body;
+  const { title, description, tags, coverImage, coverPosition } = req.body;
   if (title?.trim())       db.ideas[idx].title       = title.trim();
   if (description?.trim()) db.ideas[idx].description = description.trim();
   if (Array.isArray(tags)) db.ideas[idx].tags        = tags;
+  if (coverImage !== undefined) db.ideas[idx].coverImage = coverImage;
+  if (coverPosition !== undefined) db.ideas[idx].coverPosition = coverPosition;
 
   writeDb(db);
   res.json(db.ideas[idx]);

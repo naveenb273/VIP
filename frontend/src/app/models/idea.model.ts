@@ -58,6 +58,9 @@ export interface Idea {
   avatarColor: string;
   date: string;
   tags: string[];
+  coverImage?: string;          // base64 data URL or empty
+  coverPosition?: string;       // CSS object-position e.g. "50% 30%"
+  status: 'published' | 'draft';
   attachments: IdeaAttachment[];
   likes: number;
   shares: number;
@@ -75,4 +78,18 @@ export interface AzureUser {
   avatarColor: string;
   tenantId?: string;
   accessToken?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: 'collab_request' | 'collab_accepted' | 'collab_declined' | 'system';
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  ideaId?: string;
+  ideaTitle?: string;
+  fromUser?: string;
+  fromAvatar?: string;
+  fromAvatarColor?: string;
 }

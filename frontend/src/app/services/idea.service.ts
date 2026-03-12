@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -6,17 +6,20 @@ import {
   CollaborationRequest, IdeaAttachment
 } from '../models/idea.model';
 
-// Dev: proxied to http://localhost:3000 via proxy.conf.json
-// Prod: point to your deployed API URL
 const API = '/api';
+const DRAFT_KEY = 'vip-drafts-v1';
+const MAX_DRAFTS = 5;
 
 interface ReactionsState { likedIds: string[]; favoritedIds: string[]; }
+
+function uid(): string { return Math.random().toString(36).slice(2, 10); }
 
 @Injectable({ providedIn: 'root' })
 export class IdeaService {
   private http = inject(HttpClient);
 
   ideas        = signal<Idea[]>([]);
+  drafts       = signal<Idea[]>(this.loadDrafts());
   likedIds     = signal<Set<string>>(new Set());
   favoritedIds = signal<Set<string>>(new Set());
   loading      = signal(false);
@@ -24,7 +27,7 @@ export class IdeaService {
 
   constructor() { this.loadAll(); }
 
-  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
   async loadAll(): Promise<void> {
     this.loading.set(true);
     try {
@@ -32,7 +35,7 @@ export class IdeaService {
         firstValueFrom(this.http.get<Idea[]>(`${API}/ideas`)),
         firstValueFrom(this.http.get<ReactionsState>(`${API}/reactions`))
       ]);
-      this.ideas.set(ideas);
+      this.ideas.set(ideas.map(i => ({ ...i, status: i.status ?? 'published' })));
       this.likedIds.set(new Set(reactions.likedIds));
       this.favoritedIds.set(new Set(reactions.favoritedIds));
     } catch (e: any) {
@@ -50,7 +53,7 @@ export class IdeaService {
 
   // ── Reactions ──────────────────────────────────────────────────────────────
   async toggleLike(id: string): Promise<void> {
-    const res  = await firstValueFrom(
+    const res = await firstValueFrom(
       this.http.post<{ liked: boolean; likes: number }>(`${API}/reactions/like/${id}`, {})
     );
     const liked = new Set(this.likedIds());
@@ -86,16 +89,71 @@ export class IdeaService {
   // ── Create / Edit ──────────────────────────────────────────────────────────
   async createIdea(data: {
     title: string; description: string; author: string; authorId: string;
-    tags: string[]; avatar: string; avatarColor: string;
+    tags: string[]; avatar: string; avatarColor: string; coverImage?: string; coverPosition?: string;
   }): Promise<Idea> {
     const idea = await firstValueFrom(this.http.post<Idea>(`${API}/ideas`, data));
-    this.ideas.update(list => [idea, ...list]);
+    this.ideas.update(list => [{ ...idea, status: 'published' }, ...list]);
     return idea;
   }
 
-  async editIdea(id: string, data: { title: string; description: string; tags: string[] }): Promise<void> {
+  async editIdea(id: string, data: { title: string; description: string; tags: string[]; coverImage?: string; coverPosition?: string }): Promise<void> {
     const updated = await firstValueFrom(this.http.put<Idea>(`${API}/ideas/${id}`, data));
-    this.ideas.update(list => list.map(i => i.id === id ? updated : i));
+    this.ideas.update(list => list.map(i => i.id === id ? { ...updated, status: 'published' } : i));
+  }
+
+  // ── Drafts (localStorage, max 5) ──────────────────────────────────────────
+  saveDraft(data: {
+    id?: string; title: string; description: string; author: string; authorId: string;
+    tags: string[]; avatar: string; avatarColor: string; coverImage?: string; coverPosition?: string;
+  }): string {
+    const existing = this.drafts();
+    const draftId = data.id ?? `draft-${uid()}`;
+    const draft: Idea = {
+      id: draftId, title: data.title.trim() || 'Untitled Draft',
+      description: data.description, author: data.author, authorId: data.authorId,
+      avatar: data.avatar, avatarColor: data.avatarColor,
+      date: new Date().toISOString().slice(0, 10),
+      tags: data.tags, coverImage: data.coverImage, coverPosition: data.coverPosition ?? '50% 50%', status: 'draft',
+      attachments: [], likes: 0, shares: 0, comments: [],
+      collaborators: [], collaborationNotes: [], collaborationRequests: []
+    };
+    // Update existing or prepend new (cap at MAX_DRAFTS)
+    const idx = existing.findIndex(d => d.id === draftId);
+    let updated: Idea[];
+    if (idx >= 0) {
+      updated = existing.map(d => d.id === draftId ? draft : d);
+    } else {
+      updated = [draft, ...existing].slice(0, MAX_DRAFTS);
+    }
+    this.drafts.set(updated);
+    this.persistDrafts();
+    return draftId;
+  }
+
+  deleteDraft(id: string): void {
+    this.drafts.update(list => list.filter(d => d.id !== id));
+    this.persistDrafts();
+  }
+
+  async publishDraft(draft: Idea): Promise<void> {
+    await this.createIdea({
+      title: draft.title, description: draft.description,
+      author: draft.author, authorId: draft.authorId,
+      avatar: draft.avatar, avatarColor: draft.avatarColor,
+      tags: draft.tags, coverImage: draft.coverImage
+    });
+    this.deleteDraft(draft.id);
+  }
+
+  private persistDrafts(): void {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(this.drafts())); } catch {}
+  }
+
+  private loadDrafts(): Idea[] {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
   }
 
   // ── Attachments ────────────────────────────────────────────────────────────
@@ -127,7 +185,6 @@ export class IdeaService {
 
   async respondToRequest(ideaId: string, requestId: string, status: 'accepted' | 'declined'): Promise<void> {
     await firstValueFrom(this.http.patch(`${API}/ideas/${ideaId}/requests/${requestId}`, { status }));
-    // Reload the single idea to get the updated collaborators list if accepted
     await this.reloadIdea(ideaId);
   }
 
@@ -171,9 +228,8 @@ export class IdeaService {
     ));
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
   private async reloadIdea(id: string): Promise<void> {
     const idea = await firstValueFrom(this.http.get<Idea>(`${API}/ideas/${id}`));
-    this.ideas.update(list => list.map(i => i.id === id ? idea : i));
+    this.ideas.update(list => list.map(i => i.id === id ? { ...idea, status: 'published' } : i));
   }
 }

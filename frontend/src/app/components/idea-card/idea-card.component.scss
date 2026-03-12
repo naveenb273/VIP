@@ -2,55 +2,66 @@
   background: var(--color-surface);
   border-radius: var(--radius-xl);
   border: 1.5px solid var(--color-border);
-  padding: 24px; cursor: pointer; position: relative; overflow: hidden;
+  cursor: pointer; position: relative; overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.25s;
   box-shadow: var(--shadow-card);
   display: flex; flex-direction: column;
   &--hovered { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); border-color: var(--color-brand); }
 }
-.card__fav-badge { position: absolute; top: 14px; right: 14px; color: var(--color-star); }
+
+/* Cover */
+.card__cover {
+  width: 100%; height: 140px; object-fit: cover; display: block;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  &--placeholder {
+    background: var(--cover-gradient);
+    display: flex; align-items: center; justify-content: center;
+  }
+}
+.card__cover-emoji { font-size: 42px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)); }
+
+.card__fav-badge {
+  position: absolute; top: 148px; right: 14px;
+  color: var(--color-star); background: var(--color-surface);
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  border: 1.5px solid var(--color-border);
+}
+
+.card__body { padding: 18px 20px 16px; display: flex; flex-direction: column; flex: 1; }
 .card__title {
-  font-family: var(--font-display); font-size: 17px; font-weight: 700;
-  color: var(--color-text-primary); line-height: 1.35; letter-spacing: -0.01em; margin-bottom: 10px;
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  color: var(--color-text-primary); line-height: 1.35; letter-spacing: -0.01em; margin-bottom: 8px;
 }
 .card__desc {
-  font-size: 13.5px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 14px;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 13px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 12px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1;
 }
-.card__tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-
-/* Author row */
-.card__author {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-}
+.card__tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+.card__author { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
 .card__author-text { flex: 1; }
-.card__author-name { font-weight: 600; font-size: 13.5px; color: var(--color-text-primary); }
-.card__author-date { font-size: 11.5px; color: var(--color-text-faint); }
-
-/* Collaborator stack */
+.card__author-name { font-weight: 600; font-size: 12.5px; color: var(--color-text-primary); }
+.card__author-date { font-size: 11px; color: var(--color-text-faint); }
 .card__collab-avatars {
   display: flex;
   .avatar { margin-left: -5px; transition: background 0.25s; }
   .avatar:first-child { margin-left: 0; }
 }
-
-/* Attachment hint */
-.card__attachments-hint {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 11px; color: var(--color-text-faint); font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.card__divider { height: 1px; background: var(--color-border-light); margin-bottom: 14px; }
-.card__actions { display: flex; gap: 4px; align-items: center; }
+.card__divider { height: 1px; background: var(--color-border-light); margin-bottom: 12px; }
+.card__actions { display: flex; gap: 2px; align-items: center; }
 .card__actions-spacer { flex: 1; }
-
+.card__attach-hint {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 11px; color: var(--color-text-faint); font-weight: 600; padding: 4px 6px;
+}
 .action-btn {
-  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
-  border-radius: 10px; border: none; background: transparent;
-  color: var(--color-text-muted); font-weight: 600; font-size: 13px; transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px; padding: 5px 9px;
+  border-radius: 8px; border: none; background: transparent;
+  color: var(--color-text-muted); font-weight: 600; font-size: 12px; transition: all 0.15s;
   &--liked    { background: var(--color-like-bg);  color: var(--color-like);  }
   &--shared   { background: var(--color-share-bg); color: var(--color-share); }
   &--star     { color: var(--color-text-faint); }
   &--favorited{ background: var(--color-star-bg);  color: var(--color-star);  }
+  &:hover:not(:disabled) { background: var(--color-surface-2); }
 }

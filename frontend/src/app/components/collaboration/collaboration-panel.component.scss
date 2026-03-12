@@ -336,7 +336,7 @@
 .btn-send-request {
   display: flex; align-items: center; gap: 7px; justify-content: center;
   padding: 9px 16px; border-radius: var(--radius-md); border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  background: linear-gradient(135deg, #003057, #1c4f82); color: #fff;
   font-weight: 700; font-size: 13px;
   box-shadow: var(--shadow-brand); transition: all 0.15s;
   &:disabled { background: var(--color-surface-3); color: var(--color-text-faint); box-shadow: none; cursor: not-allowed; }

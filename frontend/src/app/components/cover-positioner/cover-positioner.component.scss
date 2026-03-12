@@ -1,0 +1,106 @@
+.positioner-wrap {
+  display: flex; flex-direction: column; gap: 0;
+  border-radius: var(--radius-md); overflow: hidden;
+  border: 1.5px solid var(--color-border);
+}
+
+/* ── Preview frame ─────────────────────────────────────────────────────── */
+.positioner-frame {
+  position: relative;
+  width: 100%; height: 170px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  background: var(--color-surface-3);
+  touch-action: none;          /* prevent scroll interference on mobile */
+
+  &--dragging {
+    cursor: grabbing;
+  }
+}
+
+.positioner-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  /* smooth transition as position updates */
+  transition: object-position 0.05s linear;
+}
+
+/* Crosshair dot showing focal point */
+.positioner-dot {
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  border: 2.5px solid var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0,48,87,0.25), 0 2px 8px rgba(0,0,0,0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: left 0.05s linear, top 0.05s linear;
+  z-index: 2;
+
+  /* Inner cross */
+  &::before, &::after {
+    content: '';
+    position: absolute; background: var(--color-brand);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  &::before { width: 2px; height: 8px; }
+  &::after  { width: 8px; height: 2px; }
+}
+
+/* Drag hint overlay */
+.positioner-hint {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,0.58); color: #fff;
+  font-size: 11.5px; font-weight: 600;
+  padding: 5px 12px; border-radius: 20px;
+  pointer-events: none;
+  animation: hintPulse 2s ease-in-out infinite;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 0.55; }
+}
+
+/* ── Toolbar ───────────────────────────────────────────────────────────── */
+.positioner-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
+  gap: 10px;
+}
+
+.positioner-coords {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px;
+}
+.positioner-coords__label {
+  color: var(--color-text-faint); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px;
+}
+.positioner-coords__val {
+  color: var(--color-brand); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+
+.positioner-toolbar__actions { display: flex; gap: 6px; }
+
+.positioner-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface); color: var(--color-text-muted);
+  font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.13s;
+  &:hover { border-color: var(--color-brand); color: var(--color-brand); background: var(--color-brand-light); }
+
+  &--danger {
+    &:hover { border-color: var(--color-like); color: var(--color-like); background: var(--color-like-bg); }
+  }
+}

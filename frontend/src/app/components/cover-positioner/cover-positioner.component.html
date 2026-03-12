@@ -1,0 +1,64 @@
+<div class="positioner-wrap">
+  <!-- Preview frame — drag inside here -->
+  <div
+    #frame
+    class="positioner-frame"
+    [class.positioner-frame--dragging]="dragging()"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+  >
+    <img
+      [src]="src"
+      alt="cover preview"
+      class="positioner-img"
+      [style.object-position]="position"
+      draggable="false"
+    />
+
+    <!-- Crosshair focal-point indicator -->
+    <div
+      class="positioner-dot"
+      [style.left.%]="posX"
+      [style.top.%]="posY"
+    ></div>
+
+    <!-- Drag hint — fades after first drag -->
+    @if (showHint()) {
+      <div class="positioner-hint">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/>
+          <polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/>
+          <line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>
+        Drag to reposition
+      </div>
+    }
+  </div>
+
+  <!-- Toolbar row below the preview -->
+  <div class="positioner-toolbar">
+    <div class="positioner-coords">
+      <span class="positioner-coords__label">Position</span>
+      <span class="positioner-coords__val">{{ posX }}% × {{ posY }}%</span>
+    </div>
+    <div class="positioner-toolbar__actions">
+      <!-- Reset to centre -->
+      <button class="positioner-btn" (click)="positionChange.emit('50% 50%')" title="Reset to centre">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Reset
+      </button>
+      <!-- Remove cover -->
+      <button class="positioner-btn positioner-btn--danger" (click)="remove.emit()" title="Remove cover image">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+        Remove
+      </button>
+    </div>
+  </div>
+</div>

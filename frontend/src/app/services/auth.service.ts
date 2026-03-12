@@ -5,7 +5,7 @@ import { AccountInfo } from '@azure/msal-browser';
 import { AzureUser } from '../models/idea.model';
 
 const STORAGE_KEY   = 'vip-user-v1';
-const AVATAR_COLORS = ['#6366f1','#f97316','#3b82f6','#14b8a6','#f43f5e','#8b5cf6','#ec4899','#10b981'];
+const AVATAR_COLORS = ['#003057','#1c4f82','#1a6496','#2e6b7a','#5a3e8c','#8b3a5a','#1a5c3f','#7a5c1a'];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -20,7 +20,6 @@ export class AuthService {
    * Maps an AccountInfo to our AzureUser model and persists it locally.
    */
   hydrateFromMsal(account: AccountInfo, accessToken?: string): void {
-      //debugger;
     const parts    = (account.name ?? account.username ?? 'U').trim().split(' ');
     const initials = parts.map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase();
 

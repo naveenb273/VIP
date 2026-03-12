@@ -13,7 +13,21 @@ export const routes: Routes = [
     loadComponent: () => import('./components/idea-detail/idea-detail.component').then(m => m.IdeaDetailComponent)
   },
   {
-    // Public — MSAL redirect lands here after login
+    path: 'profile',
+    canActivate: [MsalGuard],
+    loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent)
+  },
+  {
+    path: 'notifications',
+    canActivate: [MsalGuard],
+    loadComponent: () => import('./components/notifications/notifications.component').then(m => m.NotificationsComponent)
+  },
+  {
+    path: 'drafts',
+    canActivate: [MsalGuard],
+    loadComponent: () => import('./components/drafts/drafts.component').then(m => m.DraftsComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/auth/login.component').then(m => m.LoginComponent)
   },

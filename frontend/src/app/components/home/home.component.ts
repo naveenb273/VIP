@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { IdeaService } from '../../services/idea.service';
 import { IdeaCardComponent } from '../idea-card/idea-card.component';
 
+type SortMode = 'recent' | 'liked' | 'collaborated';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -15,14 +17,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   ideaService    = inject(IdeaService);
   private router = inject(Router);
 
-  filter = signal<'all' | 'favorites'>('all');
+  sort   = signal<SortMode>('recent');
   search = signal('');
 
+  sortTitles: Record<SortMode, string> = {
+    recent:      'Latest Ideas',
+    liked:       'Most Liked Ideas',
+    collaborated:'Most Collaborated Ideas'
+  };
+
   displayed = computed(() => {
-    let list = this.ideaService.ideas();
-    if (this.filter() === 'favorites') {
-      list = list.filter(i => this.ideaService.isFavorited(i.id));
-    }
+    let list = this.ideaService.ideas().filter(i => (i.status ?? 'published') === 'published');
+
     const q = this.search().toLowerCase();
     if (q) {
       list = list.filter(i =>
@@ -32,23 +38,26 @@ export class HomeComponent implements OnInit, OnDestroy {
         i.tags.some(t => t.toLowerCase().includes(q))
       );
     }
-    return list;
+
+    switch (this.sort()) {
+      case 'liked':       return [...list].sort((a, b) => b.likes - a.likes);
+      case 'collaborated':return [...list].sort((a, b) => b.collaborators.length - a.collaborators.length);
+      default:            return [...list].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
   });
 
-  private filterHandler = (e: Event) => this.filter.set((e as CustomEvent).detail);
+  private sortHandler   = (e: Event) => this.sort.set((e as CustomEvent).detail);
   private searchHandler = (e: Event) => this.search.set((e as CustomEvent).detail);
 
   ngOnInit(): void {
-    window.addEventListener('ideaflow:filter', this.filterHandler);
-    window.addEventListener('ideaflow:search', this.searchHandler);
+    window.addEventListener('vip:sort',   this.sortHandler);
+    window.addEventListener('vip:search', this.searchHandler);
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('ideaflow:filter', this.filterHandler);
-    window.removeEventListener('ideaflow:search', this.searchHandler);
+    window.removeEventListener('vip:sort',   this.sortHandler);
+    window.removeEventListener('vip:search', this.searchHandler);
   }
 
-  openDetail(id: string): void {
-    this.router.navigate(['/idea', id]);
-  }
+  openDetail(id: string): void { this.router.navigate(['/idea', id]); }
 }

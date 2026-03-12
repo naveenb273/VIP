@@ -1,0 +1,174 @@
+.profile-page { max-width: 1100px; margin: 0 auto; padding-bottom: 60px; }
+
+/* ── Hero ──────────────────────────────────────────────────────────────────
+   The trick: the card uses overflow:hidden on the bg portion only.
+   We wrap the whole hero in a container and let the avatar poke out below.
+
+   Visual layers (bottom → top):
+     1. Card border / white background  (z:0)
+     2. Gradient strip div              (z:1, inside clipped zone)
+     3. Avatar                          (z:10, positioned to overlap seam)
+     4. Name / email / stats text       (z:2, on white — always readable)
+*/
+.profile-hero {
+  position: relative;
+  margin-bottom: 28px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  /* overflow:hidden clips the bg gradient rounded top, but we need the avatar to escape.
+     Solution: clip only the bg strip via its own border-radius; hero card stays visible. */
+  overflow: visible;
+}
+
+/* Gradient strip — self-contained block, clipped by its own border-radius */
+.profile-hero__bg {
+  height: 140px;
+  background: var(--cover-gradient);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  overflow: hidden;                /* clip the gradient to rounded corners */
+  position: relative;
+  z-index: 1;
+}
+
+/* Avatar container — pulls avatar up to straddle the seam */
+.profile-hero__avatar-row {
+  position: relative;
+  z-index: 10;                     /* above everything — never hidden by gradient */
+  padding: 0 32px;
+  margin-top: -54px;               /* half the avatar height — straddles the seam */
+  pointer-events: none;            /* let clicks through to bg */
+}
+
+.profile-avatar {
+  width: 108px; height: 108px; font-size: 36px;
+  border: 5px solid var(--color-surface);   /* thick white border = "lifted off" effect */
+  border-radius: 50%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+  flex-shrink: 0;
+  pointer-events: auto;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-family: var(--font-display);
+}
+
+/* Text block — sits in the white zone, always perfectly legible */
+.profile-hero__info {
+  padding: 12px 32px 28px;
+  position: relative;
+  z-index: 2;
+  background: var(--color-surface);
+}
+
+.profile-hero__name-row { display: flex; align-items: center; gap: 12px; }
+
+.profile-hero__name {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.profile-hero__email {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 4px; margin-bottom: 20px;
+}
+
+/* Stats */
+.profile-hero__stats { display: flex; align-items: center; gap: 24px; }
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat__val {
+  font-size: 22px; font-weight: 800;
+  color: var(--color-brand); line-height: 1;
+}
+.stat__label {
+  font-size: 10px; font-weight: 700;
+  color: var(--color-text-faint);
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.stat__sep { width: 1px; height: 32px; background: var(--color-border); }
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+.profile-tabs {
+  display: flex; gap: 6px; margin-bottom: 24px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 6px;
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+.profile-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 12px; border-radius: var(--radius-md); border: none;
+  background: transparent; color: var(--color-text-muted);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+  &--active {
+    background: var(--color-brand); color: #fff;
+    box-shadow: 0 2px 10px rgba(0,48,87,0.25);
+  }
+  &:hover:not(.profile-tab--active) {
+    background: var(--color-surface-2); color: var(--color-text-secondary);
+  }
+}
+.profile-tab__icon { font-size: 14px; }
+.profile-tab__count {
+  font-size: 11px; font-weight: 800; padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.22); color: inherit;
+  .profile-tab:not(.profile-tab--active) & {
+    background: var(--color-surface-3); color: var(--color-text-faint);
+  }
+}
+
+/* ── Ideas Grid ────────────────────────────────────────────────────────── */
+.profile-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;
+}
+.profile-idea-card {
+  background: var(--color-surface); border-radius: var(--radius-xl);
+  border: 1.5px solid var(--color-border); overflow: hidden; cursor: pointer;
+  box-shadow: var(--shadow-card); transition: all 0.2s;
+  &:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); border-color: var(--color-brand); }
+}
+.profile-idea-cover {
+  width: 100%; height: 110px; object-fit: cover; display: block;
+  &--placeholder {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--cover-gradient); font-size: 36px;
+  }
+}
+.profile-idea-body { padding: 14px 16px; }
+.profile-idea-title {
+  font-family: var(--font-display); font-size: 14.5px; font-weight: 700;
+  color: var(--color-text-primary); margin-bottom: 5px; line-height: 1.3;
+}
+.profile-idea-desc {
+  font-size: 12px; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 10px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.profile-idea-meta {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.profile-idea-date  { font-size: 11px; color: var(--color-text-faint); }
+.profile-idea-stats { display: flex; gap: 9px; font-size: 11px; color: var(--color-text-muted); font-weight: 600; }
+.profile-idea-tags  { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* ── Empty state ───────────────────────────────────────────────────────── */
+.profile-empty { text-align: center; padding: 72px 0; }
+.profile-empty__icon  { font-size: 52px; margin-bottom: 14px; }
+.profile-empty__title { font-size: 17px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 6px; }
+.profile-empty__sub   { font-size: 13.5px; color: var(--color-text-faint); max-width: 360px; margin: 0 auto; line-height: 1.6; }
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .profile-hero__avatar-row { padding: 0 20px; margin-top: -44px; }
+  .profile-avatar { width: 88px; height: 88px; font-size: 28px; }
+  .profile-hero__info { padding: 10px 20px 20px; }
+  .profile-hero__name { font-size: 20px; }
+  .profile-tabs { gap: 3px; }
+  .profile-tab { padding: 8px 8px; font-size: 11.5px; gap: 4px; }
+  .profile-tab__icon { display: none; }
+  .profile-grid { grid-template-columns: 1fr; }
+}

@@ -2,6 +2,8 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Idea } from '../../models/idea.model';
 
+const COVER_EMOJIS = ['🌱','💡','🌿','🔬','♻️','🌍','⚡','🌊','🍃','🔋'];
+
 @Component({
   selector: 'app-idea-card',
   standalone: true,
@@ -21,6 +23,11 @@ export class IdeaCardComponent {
 
   hovered    = false;
   shareFlash = false;
+
+  coverEmoji(): string {
+    const idx = this.idea.title.charCodeAt(0) % COVER_EMOJIS.length;
+    return COVER_EMOJIS[idx];
+  }
 
   onShare(): void {
     this.shareFlash = true;

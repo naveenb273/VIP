@@ -14,6 +14,15 @@
 
         <!-- Main card -->
         <div class="detail-card">
+          <!-- Cover Image -->
+          @if (currentIdea()!.coverImage) {
+            <img [src]="currentIdea()!.coverImage" alt="cover" class="detail-cover-img"
+                 [style.object-position]="currentIdea()!.coverPosition || '50% 50%'"/>
+          } @else {
+            <div class="detail-cover-placeholder">
+              <span class="detail-cover-emoji">{{ coverEmoji() }}</span>
+            </div>
+          }
           <!-- Header row: title + save + edit -->
           <div class="detail-card__header">
             <h1 class="detail-card__title">{{ currentIdea()!.title }}</h1>
@@ -131,7 +140,7 @@
             {{ currentIdea()!.comments.length }} Comment{{ currentIdea()!.comments.length !== 1 ? 's' : '' }}
           </h2>
           <div class="comment-input-row">
-            <div class="avatar" [style.background]="auth.currentUser()?.avatarColor || '#6366f1'" style="width:36px;height:36px;font-size:13px;">
+            <div class="avatar" [style.background]="auth.currentUser()?.avatarColor || '#003057'" style="width:36px;height:36px;font-size:13px;">
               {{ auth.currentUser()?.avatar || 'YO' }}
             </div>
             <div class="comment-input-wrap">
