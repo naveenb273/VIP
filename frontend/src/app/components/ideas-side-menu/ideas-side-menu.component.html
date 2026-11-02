@@ -1,0 +1,21 @@
+<aside class="home-sidebar">
+  <h2 class="home-sidebar__title">Explore Ideas</h2>
+
+  <app-ideas-search-section
+    [search]="search"
+    (searchChange)="onSearchChange($event)"
+  />
+
+  <app-ideas-sort-section
+    [sort]="sort"
+    [sortDirection]="sortDirection"
+    (sortChange)="setSort($event)"
+  />
+
+  <app-ideas-filters-section
+    [tagFilter]="tagFilter"
+    [emailFilter]="emailFilter"
+    (tagFilterChange)="onTagFilterChange($event)"
+    (emailFilterChange)="onEmailFilterChange($event)"
+  />
+</aside>

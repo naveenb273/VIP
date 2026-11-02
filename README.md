@@ -1,116 +1,104 @@
-# VIP — Volvo Group Idea Sharing Platform
+# VIP — Volvo Ideas Platform
 
-Full-stack monorepo: **Angular 19 frontend** + **Node.js / Express backend** + **JSON file database**.
+**Angular 19 + Express REST API · Volvo Group Hackspace · VCDK Design System**
 
-```
-VIP/
-├── backend/            ← Express REST API (Node.js, ESM)
-│   ├── server.js       ← Entry point  →  http://localhost:3000
-│   ├── data/
-│   │   ├── db.json     ← Persistent JSON database (the "DB")
-│   │   └── db.helper.js
-│   └── routes/
-│       ├── ideas.js        ← Full CRUD + comments / collaborators / notes / requests
-│       ├── reactions.js    ← likes, favorites, shares
-│       └── attachments.js  ← base64 file upload / delete
-│
-└── frontend/           ← Angular 19 SPA
-    ├── proxy.conf.json ← Dev proxy: /api → http://localhost:3000
-    └── src/app/
-        ├── security/security.config.ts   ← MSAL Azure Entra factory functions
-        ├── app.config.ts                 ← Angular providers incl. MSAL
-        ├── app.routes.ts                 ← MsalGuard on protected routes
-        ├── services/
-        │   ├── auth.service.ts           ← Thin MSAL wrapper → AzureUser signal
-        │   ├── idea.service.ts           ← All state via HTTP → Express
-        │   └── theme.service.ts
-        └── components/  (auth, home, idea-card, idea-detail, navbar, ...)
-```
+An internal idea-sharing and collaboration platform built on the Volvo Group Design System (VCDK), deployed via the Volvo Group Hackspace infrastructure.
 
 ---
 
-## Quick Start
+## Prerequisites
 
-### 1. Install dependencies
+- [Node.js 20+](https://nodejs.org/en/download)
+- [Git](https://git-scm.com/)
+- Volvo Group Azure DevOps access (for `@volvo` npm packages)
+- [VS Code](https://code.visualstudio.com/)
+
+---
+
+## Getting started (local development)
+
+### 1. Authenticate to the Volvo npm feed
 
 ```bash
-# From project root
-npm run install:all
-# Or manually:
-cd backend  && npm install
-cd frontend && npm install
+npm run authenticate
 ```
 
-### 2. Start the backend
+Sign in with your Volvo Group account when prompted.
+
+### 2. Install all dependencies
 
 ```bash
-cd backend
-npm start          # node server.js  → http://localhost:3000/api
-# or hot-reload:
-npm run dev        # node --watch server.js
+npm run setup
 ```
 
-### 3. Start the frontend
+This installs both `backend/` and `frontend/` dependencies.
 
+### 3. Start the app
+
+Open **two terminals**:
+
+**Terminal 1 — API (port 3000):**
 ```bash
-cd frontend
-npm start          # ng serve --proxy-config proxy.conf.json  → http://localhost:4200
+npm run start:api
 ```
 
-Open **http://localhost:4200** — you will be redirected to the Microsoft login page.
+**Terminal 2 — Angular UI (port 4200):**
+```bash
+npm run start:ui
+```
+
+Then open [http://localhost:4200](http://localhost:4200).
+
+> The Angular dev server proxies `/api/*` requests to the Express backend automatically via `frontend/proxy.conf.json`.
 
 ---
 
-## Azure Entra ID (MSAL) Setup
+## Project structure
 
-The Azure credentials are already wired in `frontend/src/app/security/security.config.ts`.
-
-Make sure `http://localhost:4200` is listed as a **Single Page Application Redirect URI** in your Azure App Registration. If it is not:
-
-1. Go to **Azure Portal → Azure Active Directory → App Registrations → your app**
-2. Open **Authentication → Add a platform → Single-page application**
-3. Set Redirect URI: `http://localhost:4200`
-4. Enable **ID tokens** and **Access tokens** under **Implicit grant**
-
-For production, add your production URL (`https://your-domain.com`) as an additional redirect URI.
-
----
-
-## API Reference
-
-| Method | Endpoint                                    | Description                          |
-|--------|---------------------------------------------|--------------------------------------|
-| GET    | /api/ideas                                  | List all ideas                       |
-| GET    | /api/ideas/:id                              | Single idea                          |
-| POST   | /api/ideas                                  | Create idea                          |
-| PUT    | /api/ideas/:id                              | Edit idea (title/description/tags)   |
-| DELETE | /api/ideas/:id                              | Delete idea                          |
-| POST   | /api/ideas/:id/comments                     | Add comment                          |
-| POST   | /api/ideas/:id/collaborators                | Add collaborator                     |
-| DELETE | /api/ideas/:ideaId/collaborators/:collabId  | Remove collaborator                  |
-| POST   | /api/ideas/:id/notes                        | Add collaboration note               |
-| PATCH  | /api/ideas/:ideaId/notes/:noteId/pin        | Toggle pin on note                   |
-| POST   | /api/ideas/:id/requests                     | Send collaboration request           |
-| PATCH  | /api/ideas/:ideaId/requests/:reqId          | Accept / decline request             |
-| GET    | /api/reactions                              | Get liked/favorited sets             |
-| POST   | /api/reactions/like/:ideaId                 | Toggle like                          |
-| POST   | /api/reactions/favorite/:ideaId             | Toggle favorite                      |
-| POST   | /api/reactions/share/:ideaId                | Increment share count                |
-| POST   | /api/attachments/:ideaId                    | Upload attachment (base64)           |
-| DELETE | /api/attachments/:ideaId/:attachmentId      | Delete attachment                    |
-| GET    | /api/health                                 | Health check                         |
+```
+.
+├── frontend/          # Angular 19 app (VCDK design system)
+│   ├── src/
+│   │   └── app/
+│   │       ├── components/   # Navbar, idea cards, modals, profile…
+│   │       ├── services/     # Auth, idea, notification services
+│   │       └── pages/        # Route components
+│   └── angular.json
+├── backend/           # Express REST API (JSON file store)
+│   ├── routes/        # /api/ideas, /api/reactions, /api/admin…
+│   ├── data/db.json   # Seed data
+│   └── server.js
+├── azurepipelines/    # Azure DevOps CI/CD (build + deploy)
+├── terraform/         # Azure App Service infrastructure
+├── scripts/           # npm feed authentication
+└── package.json       # Root scripts
+```
 
 ---
 
-## Database
+## Admin access
 
-All data lives in `backend/data/db.json`.  
-Every API call reads from and writes to this file atomically.  
-The file is human-readable — you can edit it directly to seed or reset data.
+Log in with `naveen.basavarajappa@volvo.com` to access the **Admin → Seed Data** module, which allows you to download, upload, and clear the application database.
 
 ---
 
-## Angular Version Note
+## Azure Entra ID (MSAL) configuration
 
-Angular 19 is the latest stable release (Angular 21 does not exist yet).  
-The project targets ES2022 and uses standalone components throughout.
+| Setting       | Value                                  |
+|---------------|----------------------------------------|
+| Client ID     | `18830eed-04f6-4959-9ec5-6465b53044f2` |
+| Tenant ID     | `f530c72b-e2d4-46a4-b9de-e55f0b2131da` |
+| Redirect URI  | `http://localhost:4200` (dev)          |
+| Scopes        | `openid`, `profile`, `User.Read`       |
+
+---
+
+## Build & deploy
+
+The CI pipeline in `azurepipelines/cicd.yaml` handles:
+1. Installing dependencies
+2. Building the Angular app (`ng build --configuration production`)
+3. Packaging Angular output + Express backend into a single zip
+4. Deploying to Azure App Service
+
+The Express backend serves the Angular SPA in production (`NODE_ENV=production`).

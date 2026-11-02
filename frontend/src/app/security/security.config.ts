@@ -8,10 +8,10 @@ import {
 import { MsalGuardConfiguration, MsalInterceptorConfiguration } from '@azure/msal-angular';
 
 // ── Azure Entra ID tenant credentials ────────────────────────────────────────
-const CLIENT_ID   = '18830eed-04f6-4959-9ec5-6465b53044f2';
-const TENANT_ID   = 'f530c72b-e2d4-46a4-b9de-e55f0b2131da';
+const CLIENT_ID   = 'f545ff67-2e05-48f3-a6df-61f669b8b525';
+const TENANT_ID   = 'f25493ae-1c98-41d7-8a33-0be75f5fe603';
 const AUTHORITY   = `https://login.microsoftonline.com/${TENANT_ID}`;
-const REDIRECT_URI = 'http://localhost:4200';
+const REDIRECT_URI = window.location.origin;
 
 // ── MSAL Instance factory ─────────────────────────────────────────────────────
 export function MSALInstanceFactory(): IPublicClientApplication {
@@ -20,7 +20,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       clientId:    CLIENT_ID,
       authority:   AUTHORITY,
       redirectUri: REDIRECT_URI,
-      postLogoutRedirectUri: '/'
+      postLogoutRedirectUri: `${REDIRECT_URI}/login`
     },
     cache: {
       cacheLocation: BrowserCacheLocation.LocalStorage,

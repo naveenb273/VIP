@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { FormsModule } from '@angular/forms';
 import { Idea } from '../../models/idea.model';
 import { IdeaService } from '../../services/idea.service';
@@ -8,7 +9,7 @@ import { CoverPositionerComponent } from '../cover-positioner/cover-positioner.c
 @Component({
   selector: 'app-edit-idea-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, CoverPositionerComponent],
+  imports: [CommonModule, FormsModule, CoverPositionerComponent, IconComponent],
   templateUrl: './edit-idea-modal.component.html',
   styleUrls: ['./edit-idea-modal.component.scss']
 })
@@ -28,13 +29,13 @@ export class EditIdeaModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = {
-      title:         this.idea.title,
-      description:   this.idea.description,
-      tags:          [...this.idea.tags],
-      coverImage:    this.idea.coverImage    ?? '',
-      coverPosition: this.idea.coverPosition ?? '50% 50%'
+      title:         this.idea.ideaInformation.title,
+      description:   this.idea.ideaInformation.description,
+      tags:          [...this.idea.ideaInformation.tags],
+      coverImage:    this.idea.ideaInformation.coverImage    ?? '',
+      coverPosition: this.idea.ideaInformation.coverPosition ?? '50% 50%'
     };
-    this.coverPreview = this.idea.coverImage ?? '';
+    this.coverPreview = this.idea.ideaInformation.coverImage ?? '';
   }
 
   isValid(): boolean { return !!(this.form.title.trim() && this.form.description.trim()); }

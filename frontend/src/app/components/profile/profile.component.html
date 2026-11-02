@@ -55,28 +55,28 @@
       <div class="profile-grid">
         @for (idea of displayed(); track idea.id) {
           <div class="profile-idea-card" (click)="openIdea(idea.id)">
-            @if (idea.coverImage) {
-              <img [src]="idea.coverImage" alt="cover" class="profile-idea-cover"
-                [style.object-position]="idea.coverPosition || '50% 50%'"/>
+            @if (idea.ideaInformation.coverImage) {
+              <img [src]="idea.ideaInformation.coverImage" alt="cover" class="profile-idea-cover"
+                [style.object-position]="idea.ideaInformation.coverPosition || '50% 50%'"/>
             } @else {
               <div class="profile-idea-cover profile-idea-cover--placeholder">
-                {{ coverEmoji(idea.title) }}
+                {{ coverEmoji(idea.ideaInformation.title) }}
               </div>
             }
             <div class="profile-idea-body">
-              <h3 class="profile-idea-title">{{ idea.title }}</h3>
-              <p class="profile-idea-desc">{{ idea.description }}</p>
+              <h3 class="profile-idea-title">{{ idea.ideaInformation.title }}</h3>
+              <p class="profile-idea-desc">{{ idea.ideaInformation.description }}</p>
               <div class="profile-idea-meta">
-                <span class="profile-idea-date">{{ idea.date | date:'MMM d, y' }}</span>
+                <span class="profile-idea-date">{{ idea.audit.createdDate | date:'MMM d, y' }}</span>
                 <div class="profile-idea-stats">
-                  <span>❤️ {{ idea.likes }}</span>
-                  <span>💬 {{ idea.comments.length }}</span>
-                  <span>🤝 {{ idea.collaborators.length }}</span>
+                  <span>❤️ {{ idea.engagement.likes }}</span>
+                  <span>💬 {{ idea.content.comments.length }}</span>
+                  <span>🤝 {{ idea.collaboratorInformation.members.length }}</span>
                 </div>
               </div>
-              @if (idea.tags.length > 0) {
+              @if (idea.ideaInformation.tags.length > 0) {
                 <div class="profile-idea-tags">
-                  @for (tag of idea.tags.slice(0,3); track tag) {
+                  @for (tag of idea.ideaInformation.tags.slice(0,3); track tag) {
                     <span class="tag" [ngClass]="'tag--' + tag.toLowerCase()">{{ tag }}</span>
                   }
                 </div>

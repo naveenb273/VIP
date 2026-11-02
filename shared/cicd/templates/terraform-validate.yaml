@@ -1,0 +1,32 @@
+# Shared Terraform Validate Template
+# Reusable template for validating Terraform configurations
+
+parameters:
+  - name: workingDirectory
+    type: string
+    default: 'terraform'
+  - name: tfTokenVariable
+    type: string
+    default: 'TFC-TOKEN'
+  - name: prepareMonorepo
+    type: boolean
+    default: false
+
+steps:
+  - ${{ if eq(parameters.prepareMonorepo, true) }}:
+    - pwsh: |
+        $(Build.SourcesDirectory)/shared/cicd/scripts/prepare-terraform-monorepo.ps1 `
+          -SourcesDirectory "$(Build.SourcesDirectory)" `
+          -WorkingDirectory "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+      displayName: 'Prepare terraform files for monorepo'
+
+  - pwsh: |
+      terraform init
+      terraform validate
+    displayName: 'Terraform validate'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+    env:
+      TF_TOKEN_app_terraform_io: $(${{ parameters.tfTokenVariable }})
+      ENABLE_HACKSPACE_MIGRATION: $(ENABLE_HACKSPACE_MIGRATION)
+      TF_VAR_enable_hackspace_migration: $(ENABLE_HACKSPACE_MIGRATION)
+      TF_VAR_shared_app_service_plan_id: $(SHARED_APP_SERVICE_PLAN_ID)

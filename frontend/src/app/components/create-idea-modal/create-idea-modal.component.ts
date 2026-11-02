@@ -1,5 +1,6 @@
 import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IdeaService } from '../../services/idea.service';
@@ -9,7 +10,7 @@ import { CoverPositionerComponent } from '../cover-positioner/cover-positioner.c
 @Component({
   selector: 'app-create-idea-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, CoverPositionerComponent],
+  imports: [CommonModule, FormsModule, CoverPositionerComponent, IconComponent],
   templateUrl: './create-idea-modal.component.html',
   styleUrls: ['./create-idea-modal.component.scss']
 })
@@ -72,7 +73,7 @@ export class CreateIdeaModalComponent {
     try {
       await this.svc.createIdea({
         title: this.form.title, description: this.form.description,
-        author: this.currentUser.name, authorId: this.currentUser.id,
+        author: this.currentUser.name, authorEmail: this.currentUser.email, authorObjectId: this.currentUser.id,
         avatar: this.currentUser.avatar, avatarColor: this.currentUser.avatarColor,
         tags: this.form.tags,
         coverImage: this.form.coverImage,
@@ -88,7 +89,7 @@ export class CreateIdeaModalComponent {
     this.svc.saveDraft({
       title: this.form.title || 'Untitled Draft',
       description: this.form.description,
-      author: this.currentUser.name, authorId: this.currentUser.id,
+      author: this.currentUser.name, authorEmail: this.currentUser.email, authorObjectId: this.currentUser.id,
       avatar: this.currentUser.avatar, avatarColor: this.currentUser.avatarColor,
       tags: this.form.tags,
       coverImage: this.form.coverImage,

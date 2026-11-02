@@ -1,38 +1,38 @@
+/* ── VCDK Login ──────────────────────────────────────────────────────────── */
 .login-page {
   min-height: 100vh; background: var(--color-bg);
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-6);
 }
 .login-card {
-  background: var(--color-surface); border: 1.5px solid var(--color-border);
-  border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 440px;
-  box-shadow: var(--shadow-modal); display: flex; flex-direction: column;
-  align-items: center; animation: scaleIn 0.3s ease;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-0); padding: var(--sp-11) var(--sp-10);
+  width: 100%; max-width: 420px; box-shadow: var(--shadow-8);
+  display: flex; flex-direction: column; align-items: center;
+  animation: scaleIn var(--motion-m) var(--ease-entrance);
 }
-.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.login-logo { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-10); }
+/* VCDK logo: solid black square (radius-0 = sharp corners) */
 .login-logo__icon {
-  width: 48px; height: 48px; border-radius: 14px;
-  background: linear-gradient(135deg, #003057, #1c4f82);
-  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  width: 44px; height: 44px; border-radius: var(--radius-0);
+  background: var(--color-btn-primary-bg);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
 }
-.login-logo__text { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--color-text-primary); }
-.login-title      { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-align: center; }
-.login-sub        { font-size: 14px; color: var(--color-text-muted); margin-bottom: 28px; text-align: center; }
-.login-features   { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-bottom: 28px; }
-.login-feature    {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13.5px; color: var(--color-text-muted);
-  svg { color: var(--color-brand); flex-shrink: 0; }
-}
+.login-logo__text { font-size: 1.5rem; font-weight: 500; color: var(--color-text); letter-spacing: -0.015rem; }
+.login-title { font-size: var(--text-h3); font-weight: 500; color: var(--color-text); margin-bottom: var(--sp-3); text-align: center; letter-spacing: -0.015rem; line-height: 2rem; }
+.login-sub   { font-size: var(--text-caption-1); color: var(--color-text-subtle); margin-bottom: var(--sp-10); text-align: center; line-height: 1.5; letter-spacing: 0.0175rem; }
+.login-features { display: flex; flex-direction: column; gap: var(--sp-4); width: 100%; margin-bottom: var(--sp-10); }
+.login-feature { display: flex; align-items: center; gap: var(--sp-4); font-size: var(--text-caption-1); color: var(--color-text-subtle); letter-spacing: 0.0175rem; }
+/* Microsoft sign-in — VCDK secondary outlined */
 .btn-ms-signin {
-  display: flex; align-items: center; gap: 12px; width: 100%;
-  padding: 14px 20px; border: 1.5px solid var(--color-border);
-  border-radius: 12px; background: var(--color-surface);
-  color: var(--color-text-primary); font-size: 15px; font-weight: 600;
-  cursor: pointer; transition: all 0.18s; justify-content: center; margin-bottom: 20px;
-  &:hover {
-    border-color: var(--color-brand); background: var(--color-surface-2);
-    box-shadow: 0 4px 18px rgba(0,48,87,0.18); transform: translateY(-1px);
-  }
+  display: flex; align-items: center; gap: var(--sp-4); width: 100%;
+  height: 48px; padding: 0 var(--sp-6);
+  border: 1px solid var(--color-btn-secondary-border); border-radius: var(--radius-0);
+  background: var(--color-btn-secondary-bg); color: var(--color-btn-secondary-text);
+  font-family: var(--font-body); font-size: var(--text-caption-1);
+  font-weight: 400; letter-spacing: 0.0175rem; cursor: pointer;
+  transition: background var(--motion-s) var(--ease-standard);
+  justify-content: center; margin-bottom: var(--sp-6);
+  &:hover { background: var(--color-btn-secondary-bg-hover); }
 }
-.login-note { font-size: 12px; color: var(--color-text-faint); text-align: center; }
-@media (max-width: 480px) { .login-card { padding: 32px 20px; } }
+.login-note { font-size: 0.75rem; color: var(--color-text-subtlest); text-align: center; line-height: 1.5; letter-spacing: 0.0175rem; }
+@media (max-width: 480px) { .login-card { padding: var(--sp-9) var(--sp-6); } }

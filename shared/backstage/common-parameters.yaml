@@ -1,0 +1,39 @@
+# =============================================================================
+# Common Parameters for Hackspace Templates
+# =============================================================================
+# Import in backstageTemplate.yaml using:
+#   parameters:
+#     - $yaml: https://github.com/VolvoGroup-Internal/aet-149574-hackspaces/blob/main/shared/backstage/common-parameters.yaml
+# =============================================================================
+
+title: Parameters
+required:
+  - name
+  - azureDevopsToGithubConnection
+  - azureDevopsAgentPool
+  - azureDevopsOrganization
+  - azureDevOpsProject
+properties:
+  name:
+    title: App Name
+    type: string
+  azureDevopsToGithubConnection:
+    title: ADO Service Connection Name to GitHub
+    type: string
+    default: "VolvoGroup-Internal"
+  azureDevopsAgentPool:
+    title: Name of the ADO Agent Pool
+    type: string
+    default: "Azure Pipelines"
+  azureDevopsOrganization:
+    title: ADO Organization
+    type: string
+    default: "FPC-Department"
+  azureDevOpsProject:
+    title: ADO Project
+    type: string
+    default: "DevSecOpsPlatform-SoftwareTemplates-Sandbox"
+  githubToken:
+    title: GitHub Token
+    type: string
+    ui:field: Secret

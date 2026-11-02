@@ -1,172 +1,278 @@
-/* ── Google Fonts loaded in index.html ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIP — Volvo Group Design System (VCDK) — Exact Token Implementation
+   Source: developer.designsystem.volvogroup.com · Brand: Volvo
+   Token prefix: --vcdk-* (mapped to local --vip-* for app use)
+   
+   KEY DESIGN RULES FROM TOKENS:
+   ▸ Primary button  = #141414 bg / #fff text  (light) | #fff bg / #141414 text (dark)
+   ▸ Radii           = 0px everywhere — only --vcdk-radius-circular (99px) for avatars/pills
+   ▸ Highlight/Brand = #ae9871 (Volvo gold-sand) for active states, selected, tabs
+   ▸ Font            = Roboto, sans-serif (VCDK spec) · Volvo Novum kept as display fallback
+   ▸ Shadows         = double-layer, very subtle (0003 opacity)
+   ▸ Spacing         = density-aware calc() scale
+   ▸ Motion          = standard cubic-bezier(.2,0,.1,1)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ════ VOLVO LIGHT ════
-   Source: volvogroup.com
-   - Background:    #f5f5f5 (page), #ffffff (cards)
-   - Section bg:    #ebebeb (stat strip, dropdowns)
-   - Border:        #d4d4d4
-   - Text primary:  #141414  (near-black, Volvo body copy)
-   - Text secondary:#3d3d3d
-   - Text muted:    #767676
-   - Text faint:    #a0a0a0
-   - Brand:         #003057  (Volvo iron mark navy)
-   - Brand mid:     #1c4f82  (hover state blue)
-   - Links:         #1a6496  (Volvo link blue — "a global network of brands")
-   - Navbar:        #ffffff with very faint bottom border
-*/
+/* ── Greyscale palette (brand-neutral, from token dump) ─────────────────── */
+/* Used directly in both themes — just reassigned to surface/text roles      */
+/* grey-50:#f7f7f7  100:#ededed  200:#e1e1e1  300:#d0d0d0  400:#a9a9a9      */
+/* grey-500:#8d8d8d 600:#6b6b6b  700:#575757  800:#3d3d3d  850:#333          */
+/* grey-900:#323232 950:#212121  975:#1a1a1a  black:#141414  white:#fff      */
+
+/* ── VCDK Light Mode (Brand: Volvo) ──────────────────────────────────────── */
 :root {
-  --font-display: 'Volvo Novum Medium', serif;
-  --font-body: 'Volvo Novum Regular', sans-serif;
+  /* Density multiplier — 1 = normal, .625 = compact */
+  --vcdk-density: 1;
 
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --color-bg:           #f7f7f7;   /* vcdk-color-greyscale-grey-50 */
+  --color-surface:      #ffffff;   /* card / panel white surface */
+  --color-surface-2:    #ededed;   /* vcdk bg hover equivalent */
+  --color-surface-3:    #e1e1e1;   /* vcdk bg-variant equivalent */
+  --color-surface-4:    #d0d0d0;   /* vcdk bg-variant-subtle */
+  --color-inverse:      #141414;   /* vcdk-color-bg-inverse in light */
 
-  --color-bg:           #f5f5f5;
-  --color-surface:      #ffffff;
-  --color-surface-2:    #fafafa;
-  --color-surface-3:    #ebebeb;
-  --color-border:       #d4d4d4;
-  --color-border-light: #e8e8e8;
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --color-border:        #d0d0d0;  /* vcdk grey-300 (inverted from dark #6b6b6b) */
+  --color-border-subtle: #e1e1e1;  /* vcdk grey-200 */
+  --color-border-hover:  #141414;  /* vcdk-color-border-hover inverted */
+  --color-border-focus:  #5e9ff8;  /* vcdk-color-border-focus (same both modes) */
 
-  --color-text-primary:   #141414;
-  --color-text-secondary: #3d3d3d;
-  --color-text-muted:     #767676;
-  --color-text-faint:     #a0a0a0;
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --color-text:          #141414;  /* vcdk-color-greyscale-black */
+  --color-text-subtle:   #575757;  /* vcdk grey-700 */
+  --color-text-subtlest: #8d8d8d;  /* vcdk grey-500 */
+  --color-text-disabled: #8d8d8d;  /* vcdk grey-500 */
+  --color-text-inverse:  #ffffff;  /* text on dark surfaces */
+  --color-text-on-selected: #141414;
 
-  /* Volvo navy — primary brand */
-  --color-brand:       #003057;
-  --color-brand-light: #e8eef4;
-  --color-brand-dark:  #00213c;
-  --color-brand-mid:   #1c4f82;
-  --color-brand-glow:  rgba(0,48,87,0.18);
+  /* ── PRIMARY BUTTON — BLACK in light mode ─────────────────────────────── */
+  --color-btn-primary-bg:       #141414;   /* vcdk-color-bg-button-primary (inverted) */
+  --color-btn-primary-bg-hover: #333333;   /* vcdk grey-850 */
+  --color-btn-primary-bg-press: #575757;   /* vcdk grey-700 */
+  --color-btn-primary-text:     #ffffff;   /* vcdk-color-text-on-button-primary (inv) */
 
-  /* Volvo steel-blue accent (link colour) */
-  --color-accent:      #1a6496;
-  --color-accent-bg:   #e8f0f7;
-  --color-accent-dark: #124d73;
+  /* ── SECONDARY BUTTON — outlined, transparent ─────────────────────────── */
+  --color-btn-secondary-bg:       transparent;
+  --color-btn-secondary-bg-hover: rgba(20,20,20,0.10);  /* inverted from #ffffff1a */
+  --color-btn-secondary-border:   rgba(20,20,20,0.70);  /* inverted from #ffffffb3 */
+  --color-btn-secondary-text:     #141414;
 
-  /* Reactions — muted tones to stay on-brand */
-  --color-like:      #c0392b;  --color-like-bg:   #fdf0ee;
-  --color-share:     #1a6496;  --color-share-bg:  #e8f0f7;
-  --color-star:      #b5860d;  --color-star-bg:   #fdf6e3;
+  /* ── TERTIARY BUTTON — ghost ──────────────────────────────────────────── */
+  --color-btn-tertiary-bg:       transparent;
+  --color-btn-tertiary-bg-hover: rgba(20,20,20,0.10);
+  --color-btn-tertiary-text:     #141414;
 
-  /* Shadows — very subtle, Volvo uses almost no shadow */
-  --shadow-card:       0 1px 4px rgba(0,0,0,0.06);
-  --shadow-card-hover: 0 6px 24px rgba(0,0,0,0.10);
-  --shadow-modal:      0 16px 60px rgba(0,0,0,0.16);
-  --shadow-nav:        0 1px 0px rgba(0,0,0,0.08);
-  --shadow-brand:      0 2px 10px rgba(0,48,87,0.25);
+  /* ── HIGHLIGHT — Volvo gold/sand accent ───────────────────────────────── */
+  /* vcdk-color-bg-selected / border-tab / border-highlight                  */
+  --color-highlight:        #ae9871;  /* Volvo sand-400 / highlight */
+  --color-highlight-hover:  #b9a888;  /* sand-300 */
+  --color-highlight-press:  #a0865e;  /* sand-600 */
+  --color-highlight-subtle: #eee2d2;  /* sand-100 */
+  --color-highlight-text:   #141414;  /* on-highlight */
 
-  --radius-sm: 4px;  --radius-md: 6px;  --radius-lg: 8px;
-  --radius-xl: 10px; --radius-2xl: 12px; --radius-full: 9999px;
+  /* ── Functional / semantic ────────────────────────────────────────────── */
+  --color-error:          #ff5454;  --color-error-subtle:   #3d2420;
+  --color-warning:        #ffa000;  --color-warning-subtle: #463215;
+  --color-success:        #18b228;  --color-success-subtle: #28362a;
+  --color-info:           #5e9ff8;  --color-info-subtle:    #253648;
+  --color-link:           #146ad1;  /* functional-blue-600 for light */
+  --color-link-hover:     #2a609d;  /* functional-blue-700 */
+  --color-link-visited:   #adc1de;  /* functional-blue-200 */
 
+  /* ── Notification badge ───────────────────────────────────────────────── */
+  --color-badge:          #ff5454;  /* vcdk-color-bg-notification-badge */
+
+  /* ── Microsoft app colours (unchanged) ───────────────────────────────── */
+  --teams-color:  #5059C9;  --teams-bg:   #eef0fd;
+  --outlook-color:#0078D4;  --outlook-bg: #deeefb;
+  --collab-panel-bg: #ededed;
+
+  /* ── VCDK Shadows ─────────────────────────────────────────────────────── */
+  --shadow-1:  0px 0.2px 2px 0px rgba(0,0,0,.19), 0px 1px 2px 0px rgba(0,0,0,.19);
+  --shadow-2:  0px 0.2px 2px 0px rgba(0,0,0,.19), 0px 2px 4px 0px rgba(0,0,0,.19);
+  --shadow-4:  0px 0.3px 2px 0px rgba(0,0,0,.19), 0px 3px 8px 0px rgba(0,0,0,.19);
+  --shadow-8:  0px 0.6px 3px 0px rgba(0,0,0,.19), 0px 8px 16px 0px rgba(0,0,0,.19);
+  --shadow-16: 0px 1px 4px 0px rgba(0,0,0,.19), 0px 16px 32px 0px rgba(0,0,0,.19);
+
+  /* ── VCDK Radius — ALL ZERO except circular ───────────────────────────── */
+  --radius-0:        0px;           /* vcdk-radius-default/small/large/xlarge */
+  --radius-circular: 6.1875rem;     /* vcdk-radius-circular — avatars, pills only */
+
+  /* ── VCDK Spacing (density-aware) ────────────────────────────────────── */
+  --sp-1:  calc(var(--vcdk-density) * 0.125rem);  /*  2px */
+  --sp-2:  calc(var(--vcdk-density) * 0.25rem);   /*  4px */
+  --sp-3:  calc(var(--vcdk-density) * 0.375rem);  /*  6px */
+  --sp-4:  calc(var(--vcdk-density) * 0.5rem);    /*  8px */
+  --sp-5:  calc(var(--vcdk-density) * 0.75rem);   /* 12px */
+  --sp-6:  calc(var(--vcdk-density) * 1rem);      /* 16px */
+  --sp-7:  calc(var(--vcdk-density) * 1.25rem);   /* 20px */
+  --sp-8:  calc(var(--vcdk-density) * 1.5rem);    /* 24px */
+  --sp-9:  calc(var(--vcdk-density) * 2rem);      /* 32px */
+  --sp-10: calc(var(--vcdk-density) * 2.5rem);    /* 40px */
+  --sp-11: calc(var(--vcdk-density) * 3rem);      /* 48px */
+  --sp-12: calc(var(--vcdk-density) * 4rem);      /* 64px */
+
+  /* ── VCDK Typography ──────────────────────────────────────────────────── */
+  --font-body:    'Volvo Novum', Roboto, sans-serif;  /* Volvo Novum preferred; Roboto VCDK fallback */
+  --font-display: 'Volvo Novum', Roboto, sans-serif;
+  --font-mono:    'Noto Sans Mono', monospace;        /* vcdk default-mono */
+
+  --text-caption-2:  0.75rem;   /* 12px */
+  --text-caption-1:  0.875rem;  /* 14px — also button size */
+  --text-body:       1rem;      /* 16px */
+  --text-subtitle-2: 0.875rem;  /* 14px w500 */
+  --text-subtitle-1: 1rem;      /* 16px w500 */
+  --text-h4:         1.25rem;   /* 20px */
+  --text-h3:         1.5rem;    /* 24px */
+  --text-h2:         2rem;      /* 32px */
+  --text-h1:         3rem;      /* 48px */
+
+  /* ── VCDK Motion ──────────────────────────────────────────────────────── */
+  --motion-s:  0.16s;
+  --motion-m:  0.24s;
+  --motion-l:  0.32s;
+  --ease-standard: cubic-bezier(.2, 0, .1, 1);
+  --ease-entrance: cubic-bezier(0, 0, .4, 1);
+  --ease-exit:     cubic-bezier(.2, 0, 1, 1);
+
+  /* ── Navbar ───────────────────────────────────────────────────────────── */
+  --navbar-height: 60px;
   --navbar-bg:     #ffffff;
-  --navbar-border: #d4d4d4;
+  --navbar-border: #d0d0d0;
 
-  --teams-color:   #5059C9; --teams-bg:   #eef0fd;
-  --outlook-color: #0078D4; --outlook-bg: #deeefb;
-  --collab-panel-bg: #fafafa;
-
-  /* Cover placeholder — Volvo navy gradient */
-  --cover-gradient: linear-gradient(135deg, #00213c 0%, #003057 55%, #1c4f82 100%);
+  /* ── Cover banner (decorative only — not on interactive elements) ──────── */
+  --cover-gradient: linear-gradient(160deg, #141414 0%, #333333 60%, #575757 100%);
 }
 
-/* ════ VOLVO DARK ════
-   Volvo doesn't have an official dark mode, but we mirror their
-   palette using deep navy surfaces — consistent with their brand DNA.
-*/
+/* ── VCDK Dark Mode (Brand: Volvo) — exact from token dump ──────────────── */
 [data-theme='dark'] {
-  --color-bg:           #0d1a26;
-  --color-surface:      #132030;
-  --color-surface-2:    #18283a;
-  --color-surface-3:    #1e3044;
-  --color-border:       #2a3f55;
-  --color-border-light: #1e3044;
+  /* Surfaces — exact from dump */
+  --color-bg:           #141414;   /* vcdk-color-bg-base */
+  --color-surface:      #212121;   /* vcdk-color-bg */
+  --color-surface-2:    #323232;   /* vcdk-color-bg-hover */
+  --color-surface-3:    #3d3d3d;   /* vcdk-color-bg-variant */
+  --color-surface-4:    #575757;   /* vcdk-color-bg-selected-disabled */
+  --color-inverse:      #ffffff;
 
-  --color-text-primary:   #f0f0f0;
-  --color-text-secondary: #c8d4de;
-  --color-text-muted:     #8097ac;
-  --color-text-faint:     #526070;
+  --color-border:        #6b6b6b;  /* vcdk-color-border */
+  --color-border-subtle: #3d3d3d;  /* vcdk-color-border-subtle */
+  --color-border-hover:  #ffffff;  /* vcdk-color-border-hover */
+  --color-border-focus:  #5e9ff8;  /* vcdk-color-border-focus */
 
-  --color-brand:       #4d8ab5;
-  --color-brand-light: #1a3348;
-  --color-brand-dark:  #6fa8d0;
-  --color-brand-mid:   #5d9cc7;
-  --color-brand-glow:  rgba(77,138,181,0.25);
+  --color-text:          #ffffff;  /* vcdk-color-text */
+  --color-text-subtle:   #d0d0d0;  /* vcdk-color-text-subtle */
+  --color-text-subtlest: #a9a9a9;  /* vcdk-color-text-subtlest */
+  --color-text-disabled: #6b6b6b;  /* vcdk-color-text-disabled */
+  --color-text-inverse:  #141414;
+  --color-text-on-selected: #141414; /* vcdk-color-text-on-selected */
 
-  --color-accent:      #5d9cc7;
-  --color-accent-bg:   #162535;
-  --color-accent-dark: #7db8e0;
+  /* PRIMARY BUTTON — WHITE in dark mode (exact from dump) */
+  --color-btn-primary-bg:       #ffffff;  /* vcdk-color-bg-button-primary */
+  --color-btn-primary-bg-hover: #e1e1e1;  /* vcdk-color-bg-button-primary-hover */
+  --color-btn-primary-bg-press: #a9a9a9;  /* vcdk-color-bg-button-primary-pressed */
+  --color-btn-primary-text:     #141414;  /* vcdk-color-text-on-button-primary */
 
-  --color-like:      #e05c4a;  --color-like-bg:   #2a1510;
-  --color-share:     #5d9cc7;  --color-share-bg:  #162535;
-  --color-star:      #c9a227;  --color-star-bg:   #241e08;
+  --color-btn-secondary-bg:       transparent;
+  --color-btn-secondary-bg-hover: rgba(255,255,255,0.10);  /* #ffffff1a */
+  --color-btn-secondary-border:   rgba(255,255,255,0.70);  /* #ffffffb3 */
+  --color-btn-secondary-text:     #ffffff;
 
-  --shadow-card:       0 2px 8px rgba(0,0,0,0.40);
-  --shadow-card-hover: 0 10px 30px rgba(0,0,0,0.55);
-  --shadow-modal:      0 20px 70px rgba(0,0,0,0.75);
-  --shadow-nav:        0 1px 0px rgba(0,0,0,0.50);
-  --shadow-brand:      0 2px 12px rgba(77,138,181,0.28);
+  --color-btn-tertiary-bg:       transparent;
+  --color-btn-tertiary-bg-hover: rgba(255,255,255,0.10);
+  --color-btn-tertiary-text:     #ffffff;
 
-  --navbar-bg:     #0d1a26;
-  --navbar-border: #2a3f55;
-  --teams-color:   #7b87e8; --teams-bg:   #1a1d40;
-  --outlook-color: #4da6ff; --outlook-bg: #0d2744;
-  --collab-panel-bg: #18283a;
-  --cover-gradient: linear-gradient(135deg, #0a111a 0%, #0d1a26 55%, #132030 100%);
+  /* Highlight — same in both modes */
+  --color-highlight:        #ae9871;
+  --color-highlight-hover:  #b9a888;
+  --color-highlight-press:  #a0865e;
+  --color-highlight-subtle: #3d3d3d;  /* vcdk-color-bg-selected-subtle dark */
+  --color-highlight-text:   #141414;
+
+  --color-link:         #5e9ff8;   /* vcdk-color-text-link dark */
+  --color-link-hover:   #146ad1;
+  --color-link-visited: #adc1de;
+
+  --navbar-bg:     #141414;
+  --navbar-border: #6b6b6b;
+  --teams-color:   #7b87e8;  --teams-bg:   #1a1d40;
+  --outlook-color: #4da6ff;  --outlook-bg: #0d2744;
+  --collab-panel-bg: #212121;
+  --cover-gradient: linear-gradient(160deg, #0a0a0a 0%, #141414 60%, #212121 100%);
 }
 
+/* ── Base resets ─────────────────────────────────────────────────────────── */
 html, body {
-  height: 100%; background: var(--color-bg);
-  font-family: var(--font-body); color: var(--color-text-primary);
+  height: 100%;
+  background: var(--color-bg);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
-  transition: background 0.25s ease, color 0.25s ease;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--motion-m) var(--ease-standard),
+              color var(--motion-m) var(--ease-standard);
 }
 button   { font-family: var(--font-body); cursor: pointer; }
-textarea, input { font-family: var(--font-body); }
-a { color: var(--color-accent); }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+input, textarea, select { font-family: var(--font-body); }
+a { color: var(--color-link); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--color-link-hover); }
+a:visited { color: var(--color-link-visited); }
 
-@keyframes slideUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+/* VCDK scrollbar */
+::-webkit-scrollbar { width: var(--scrollbar-size, 8px); height: var(--scrollbar-size, 8px); }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-subtlest); }
+
+/* ── VCDK Keyframes ──────────────────────────────────────────────────────── */
 @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes scaleIn { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
 @keyframes spin    { to { transform: rotate(360deg); } }
-@keyframes pulse   { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
-/* Tags — subdued palette consistent with Volvo's restrained style */
+/* ── Global components ───────────────────────────────────────────────────── */
+
+/* Avatar — circular (radius-circular is the ONLY non-zero radius in VCDK) */
+.avatar {
+  border-radius: var(--radius-circular);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-inverse); font-weight: 700; flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+/* ── VCDK Tags / Status chips ────────────────────────────────────────────── */
+/* VCDK uses 0 border-radius. Pill only for avatar/circular elements.        */
+/* Tags here use a subtle background with border — restrained palette        */
 .tag {
   display: inline-flex; align-items: center;
-  padding: 3px 10px; border-radius: var(--radius-full);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-  &.tag--ai          { background: #eaf0f7; color: #003057; }
-  &.tag--fintech      { background: #f0eaf7; color: #3b0764; }
-  &.tag--mobile       { background: #e8f0f7; color: #1a3f6f; }
-  &.tag--community    { background: #eaf4ef; color: #1a4d35; }
-  &.tag--marketplace  { background: #f7eaee; color: #6b1b2f; }
-  &.tag--social       { background: #f7f0ea; color: #6b3a1a; }
-  &.tag--productivity { background: #eaf4f4; color: #1a4040; }
-  &.tag--desktop      { background: #eaf2f7; color: #1a3f57; }
-  &.tag--media        { background: #f2eaf7; color: #4a1a6b; }
-  &.tag--video        { background: #f7eaea; color: #6b1a1a; }
-  &.tag--default      { background: var(--color-surface-3); color: var(--color-text-muted); }
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--radius-0);     /* VCDK: no radius */
+  font-size: 0.75rem; font-weight: 500;
+  letter-spacing: 0.0175rem;          /* vcdk button letter-spacing */
+  border: 1px solid transparent;
+  line-height: 1.6; text-transform: uppercase;
+
+  &.tag--default     { background: var(--color-surface-3); color: var(--color-text-subtle); border-color: var(--color-border); }
+  &.tag--ai          { background: #dce8fa; color: #0b2f79; border-color: #adc1de; }
+  &.tag--mobile      { background: #dce8fa; color: #0b2f79; border-color: #adc1de; }
+  &.tag--fintech     { background: #ede8f4; color: #3b1a6b; border-color: #c8b8e0; }
+  &.tag--community   { background: #dff2e4; color: #177844; border-color: #6cc17a; }
+  &.tag--marketplace { background: #fadcd9; color: #bf2012; border-color: #ff5454; }
+  &.tag--social      { background: #fff3de; color: #b25300; border-color: #ffb54d; }
+  &.tag--productivity{ background: #dff2e4; color: #177844; border-color: #6cc17a; }
+  &.tag--desktop     { background: #dce8fa; color: #2a609d; border-color: #7ab3f5; }
+  &.tag--media       { background: #ede8f4; color: #4a1a6b; border-color: #c8b0e0; }
+  &.tag--video       { background: #fadcd9; color: #bf2012; border-color: #ff5454; }
+  &.tag--truck       { background: #eee2d2; color: #7d5638; border-color: #c0a790; }
 }
 
-.avatar {
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 700; letter-spacing: 0.02em; flex-shrink: 0;
-}
-
-/* Cover image / placeholder */
-.cover-image {
-  width: 100%; height: 160px; object-fit: cover;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  display: block;
-}
-.cover-placeholder {
-  width: 100%; height: 160px;
-  background: var(--cover-gradient);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 40px; opacity: 0.9;
-}
+/* Cover gradient — ONLY for decorative hero/card banner areas */
+.cover-gradient-bg { background: var(--cover-gradient); }

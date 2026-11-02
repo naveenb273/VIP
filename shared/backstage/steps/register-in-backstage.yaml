@@ -1,0 +1,5 @@
+id: registerInBackstage
+name: Register in Backstage
+action: catalog:register
+input:
+  catalogInfoUrl: https://github.com/VolvoGroup-Internal/${{ parameters.name }}/blob/main/backstageComponent.yaml

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
 import { AppNotification } from '../../models/idea.model';
@@ -7,7 +8,7 @@ import { AppNotification } from '../../models/idea.model';
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IconComponent],
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.scss']
 })

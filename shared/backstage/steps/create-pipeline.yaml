@@ -1,0 +1,43 @@
+id: createpipeline
+name: Create CI pipeline
+action: http:backstage:request
+input:
+  method: POST
+  path: proxy/gp-ado/${{parameters.azureDevopsOrganization}}/${{parameters.azureDevOpsProject}}/_apis/build/Definitions?api-version=5.1
+  body: |
+    {
+      "name": "cicd-${{ parameters.name }}",
+      "path": "${{ parameters.name }}",
+      "queue": {
+        "id": ${{ steps.getagentqueue.output.body['value'][0]['id'] }}
+      },
+      "description": "CI pipeline for ${{ parameters.name }}",
+      "process": {
+        "yamlFilename": "azurepipelines/cicd.yaml",
+        "type": 2
+      },
+      "repository": {
+        "defaultBranch": "main",
+        "id": "VolvoGroup-Internal/${{ parameters.name }}",
+        "name": "VolvoGroup-Internal/${{ parameters.name }}",
+        "properties": {
+          "connectedServiceId": "${{ steps.getserviceendpoint.output.body['value'][0]['id'] }}"
+        },
+        "type": "GitHub",
+        "url": "https://github.com/VolvoGroup-Internal/${{ parameters.name }}"
+      },
+      "triggers": [
+        {
+          "settingsSourceType": 2,
+          "triggerType": 2
+        },
+        {
+          "forks": {
+            "enabled": "true",
+            "allowSecrets": "false"
+          },
+          "settingsSourceType": 2,
+          "triggerType": "pullRequest"
+        }
+      ]
+    }

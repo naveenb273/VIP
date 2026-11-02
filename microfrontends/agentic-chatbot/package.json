@@ -1,0 +1,31 @@
+{
+  "name": "vip-agentic-chatbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic Chatbot micro-frontend — built independently, loaded into the VIP host as a custom element",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "build:host": "ng build && node scripts/copy-to-host.mjs"
+  },
+  "dependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/elements": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.0",
+    "vip-hackspace": "file:../..",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.0",
+    "@angular/cli": "^19.2.0",
+    "@angular/compiler-cli": "^19.2.0",
+    "@types/node": "^22.0.0",
+    "typescript": "~5.7.0"
+  }
+}

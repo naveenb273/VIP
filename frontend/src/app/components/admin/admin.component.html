@@ -1,0 +1,17 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div class="admin-page__badge"><app-icon name="shield" size="14" /> Administration</div>
+    <h1>Admin</h1>
+  </header>
+
+  <nav class="admin-page__nav" aria-label="Admin sections">
+    <a routerLink="seed" routerLinkActive="admin-page__nav-link--active" class="admin-page__nav-link">
+      <app-icon name="table" size="15" /> Seed Data
+    </a>
+    <a routerLink="access" routerLinkActive="admin-page__nav-link--active" class="admin-page__nav-link">
+      <app-icon name="users" size="15" /> Admin Access
+    </a>
+  </nav>
+
+  <router-outlet />
+</section>

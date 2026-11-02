@@ -1,0 +1,6 @@
+id: getserviceendpoint
+name: Get service connection id
+action: http:backstage:request
+input:
+  method: GET
+  path: proxy/gp-ado/${{ parameters.azureDevopsOrganization }}/${{ parameters.azureDevOpsProject }}/_apis/serviceendpoint/endpoints?endpointNames=${{ parameters.azureDevopsToGithubConnection }}&api-version=7.0

@@ -1,6 +1,10 @@
 @if (showNav()) {
   <app-navbar />
 }
-<main [class.main-content]="showNav()">
+<main class="app-main" [class.app-main--with-nav]="showNav()">
   <router-outlet />
 </main>
+
+@if (chatbotReady() && showNav()) {
+  <vip-agentic-chatbot bot-name="VIP Assistant"></vip-agentic-chatbot>
+}

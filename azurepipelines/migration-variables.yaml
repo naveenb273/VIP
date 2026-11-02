@@ -1,0 +1,17 @@
+# Hackspace migration pipeline variables — updated by ado-migration and infrastructure-tf-migration.
+variables:
+- name: ENABLE_HACKSPACE_MIGRATION
+  value: 'false'
+- name: AZURE_SERVICE_CONNECTION
+  value: '142964-Dev0d-dsoplatformsanbox'
+- ${{ if eq(variables['ENABLE_HACKSPACE_MIGRATION'], 'true') }}:
+  - name: MIGRATION_APP_NAME
+    value: ''
+  - name: MIGRATION_CONNECTED_VNET_NAME
+    value: ''
+  - name: MIGRATION_CONNECTED_VNET_RG_NAME
+    value: ''
+  - name: MIGRATION_APPSERVICE_SUBNET_NAME
+    value: ''
+  - name: MIGRATION_POSTGRES_SUBNET_NAME
+    value: ''

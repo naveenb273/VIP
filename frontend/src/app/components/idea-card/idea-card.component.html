@@ -2,9 +2,9 @@
   (mouseenter)="hovered = true" (mouseleave)="hovered = false" (click)="cardClick.emit()">
 
   <!-- Cover image -->
-  @if (idea.coverImage) {
-    <img [src]="idea.coverImage" alt="cover" class="card__cover"
-         [style.object-position]="idea.coverPosition || '50% 50%'"/>
+  @if (idea.ideaInformation.coverImage) {
+    <img [src]="idea.ideaInformation.coverImage" alt="cover" class="card__cover"
+         [style.object-position]="idea.ideaInformation.coverPosition || '50% 50%'"/>
   } @else {
     <div class="card__cover card__cover--placeholder">
       <span class="card__cover-emoji">{{ coverEmoji() }}</span>
@@ -13,45 +13,43 @@
 
   @if (favorited) {
     <span class="card__fav-badge">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-      </svg>
+      <app-icon name="star-filled" size="15" />
     </span>
   }
 
   <div class="card__body">
-    <h3 class="card__title">{{ idea.title }}</h3>
-    <p class="card__desc">{{ idea.description }}</p>
+    <h3 class="card__title">{{ idea.ideaInformation.title }}</h3>
+    <p class="card__desc">{{ idea.ideaInformation.description }}</p>
 
-    @if (idea.tags.length > 0) {
+    @if (idea.ideaInformation.tags.length > 0) {
       <div class="card__tags">
-        @for (tag of idea.tags.slice(0,3); track tag) {
+        @for (tag of idea.ideaInformation.tags.slice(0,3); track tag) {
           <span class="tag" [ngClass]="'tag--' + tag.toLowerCase()">{{ tag }}</span>
         }
-        @if (idea.tags.length > 3) {
-          <span class="tag tag--default">+{{ idea.tags.length - 3 }}</span>
+        @if (idea.ideaInformation.tags.length > 3) {
+          <span class="tag tag--default">+{{ idea.ideaInformation.tags.length - 3 }}</span>
         }
       </div>
     }
 
     <div class="card__author">
-      <div class="avatar" [style.background]="idea.avatarColor" [style.width.px]="34" [style.height.px]="34" [style.fontSize.px]="12">
-        {{ idea.avatar }}
+      <div class="avatar" [style.background]="idea.authorInformation.avatarColor" [style.width.px]="34" [style.height.px]="34" [style.fontSize.px]="12">
+        {{ idea.authorInformation.avatar }}
       </div>
       <div class="card__author-text">
-        <div class="card__author-name">{{ idea.author }}</div>
-        <div class="card__author-date">{{ idea.date | date:'MMM d, y' }}</div>
+        <div class="card__author-name">{{ idea.authorInformation.name }}</div>
+        <div class="card__author-date">{{ idea.audit.createdDate | date:'MMM d, y' }}</div>
       </div>
-      @if (idea.collaborators && idea.collaborators.length > 1) {
+      @if (idea.collaboratorInformation.members && idea.collaboratorInformation.members.length > 1) {
         <div class="card__collab-avatars">
-          @for (c of idea.collaborators.slice(1, 4); track c.id) {
+          @for (c of idea.collaboratorInformation.members.slice(1, 4); track c.id) {
             <div class="avatar" [style.background]="c.avatarColor"
               style="width:22px;height:22px;font-size:8px;border:2px solid var(--color-surface);"
               [title]="c.name">{{ c.avatar }}</div>
           }
-          @if (idea.collaborators.length > 4) {
+          @if (idea.collaboratorInformation.members.length > 4) {
             <div class="avatar" style="background:var(--color-brand);width:22px;height:22px;font-size:8px;border:2px solid var(--color-surface);">
-              +{{ idea.collaborators.length - 4 }}
+              +{{ idea.collaboratorInformation.members.length - 4 }}
             </div>
           }
         </div>
@@ -62,37 +60,26 @@
 
     <div class="card__actions" (click)="$event.stopPropagation()">
       <button class="action-btn" [class.action-btn--liked]="liked" (click)="like.emit()">
-        <svg width="15" height="15" viewBox="0 0 24 24" [attr.fill]="liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-        </svg>
-        {{ idea.likes }}
+        <app-icon [name]="liked ? 'heart-filled' : 'heart'" size="15" />
+        {{ idea.engagement.likes }}
       </button>
       <button class="action-btn" (click)="cardClick.emit()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        {{ idea.comments.length }}
+        <app-icon name="comment" size="15" />
+        {{ idea.content.comments.length }}
       </button>
       <button class="action-btn" [class.action-btn--shared]="shareFlash" (click)="onShare()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-        </svg>
-        {{ idea.shares }}
+        <app-icon name="share" size="15" />
+        {{ idea.engagement.shares }}
       </button>
       <div class="card__actions-spacer"></div>
-      @if ((idea.attachments || []).length > 0) {
-        <span class="card__attach-hint" title="{{ (idea.attachments || []).length }} attachments">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
-          {{ idea.attachments.length }}
+      @if ((idea.content.attachments || []).length > 0) {
+        <span class="card__attach-hint" title="{{ (idea.content.attachments || []).length }} attachments">
+          <app-icon name="paperclip" size="12" />
+          {{ idea.content.attachments.length }}
         </span>
       }
       <button class="action-btn action-btn--star" [class.action-btn--favorited]="favorited" (click)="favorite.emit()">
-        <svg width="15" height="15" viewBox="0 0 24 24" [attr.fill]="favorited ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
+        <app-icon [name]="favorited ? 'star-filled' : 'star'" size="15" />
       </button>
     </div>
   </div>

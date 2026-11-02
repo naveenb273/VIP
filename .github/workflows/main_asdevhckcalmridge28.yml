@@ -1,0 +1,163 @@
+# VIP — Volvo Ideas Platform
+# Docs: https://github.com/Azure/webapps-deploy
+
+name: Build and deploy VIP to Azure Web App - asdevhckcalmridge28
+
+# WORKFLOW STATUS: DISABLED
+#
+# This workflow is intentionally disabled in TWO places:
+# 1) Trigger level (below): only manual trigger is kept.
+# 2) Job level: `if: ${{ false }}` on both `build` and `deploy` jobs.
+#
+# HOW TO RE-ENABLE (future):
+# 1) Re-enable automatic trigger in the `on:` block by adding push on main:
+#
+#    on:
+#      push:
+#        branches:
+#          - main
+#      workflow_dispatch:
+#
+# 2) Remove or change these lines in BOTH jobs:
+#      if: ${{ false }}
+#
+#    Recommended:
+#      - remove the line entirely, OR
+#      - replace with a real condition, e.g. `if: github.ref == 'refs/heads/main'`
+#
+# 3) If you want approval before deploy, keep `environment: production`
+#    on the deploy job and configure reviewers in:
+#    GitHub -> Settings -> Environments -> production -> Required reviewers.
+#
+# NOTE: If steps/auth/secrets changed while disabled, validate with
+# `workflow_dispatch` first before relying on push-triggered deploys.
+on:
+  workflow_dispatch:
+
+jobs:
+  # ════════════════════════════════════════════════════════════════════════════
+  # BUILD JOB
+  # Steps:
+  #   1. Install backend (Express) dependencies       → --ignore-scripts
+  #   2. Install frontend (Angular) dependencies      → --ignore-scripts
+  #   3. Build Angular for production
+  #   4. Copy Angular dist output → backend/public/
+  #   5. Upload backend/ as the deployment artifact
+  #
+  # WHY --ignore-scripts on both installs?
+  #   The root package.json has a preinstall hook (scripts/authenticate.mjs)
+  #   that tries to interactively sign in to the Volvo ADO npm feed.
+  #   Neither backend nor frontend use any @volvo/* packages, so the Volvo
+  #   feed is not needed in CI — skipping scripts avoids the auth failure.
+  #
+  # WHY single artifact?
+  #   Locally dev runs two terminals (port 3000 + 4200).
+  #   In production, Express serves BOTH the API (/api/*) AND the Angular SPA
+  #   from backend/public/ — one process, one port (Azure PORT env var).
+  # ════════════════════════════════════════════════════════════════════════════
+  build:
+    # DISABLED GUARD: remove this line to allow build job to run.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Show Node / npm versions
+        run: |
+          node --version
+          npm --version
+
+      # ── Backend ─────────────────────────────────────────────────────────────
+      # --ignore-scripts  → skips the root preinstall authenticate.mjs hook
+      # --omit=dev        → production dependencies only (smaller artifact)
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install --omit=dev --ignore-scripts
+
+      # ── Frontend ────────────────────────────────────────────────────────────
+      # --ignore-scripts  → skips the root preinstall authenticate.mjs hook
+      # (all Angular + MSAL packages are on public npm, no Volvo feed needed)
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install --ignore-scripts
+
+      - name: Build Angular app (production)
+        working-directory: frontend
+        run: npx ng build --configuration production
+
+      # ── Merge Angular output into backend ───────────────────────────────────
+      # Angular builds to: frontend/dist/vip/browser/
+      # Express serves static files from: backend/public/
+      - name: Copy Angular dist → backend/public
+        run: |
+          mkdir -p backend/public
+          cp -r frontend/dist/vip/browser/. backend/public/
+          echo "✅ Angular files copied to backend/public:"
+          ls backend/public/
+
+      # ── Upload deployment artifact ──────────────────────────────────────────
+      # Only backend/ is deployed — it now contains:
+      #   server.js       Express entry point (serves API + Angular SPA)
+      #   routes/         API route handlers
+      #   data/db.json    JSON file database
+      #   public/         Built Angular SPA (copied above)
+      #   node_modules/   Backend dependencies only
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: backend/
+          if-no-files-found: error
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # DEPLOY JOB
+  # ════════════════════════════════════════════════════════════════════════════
+  deploy:
+    # DISABLED GUARD: remove this line to allow deploy job to run.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    needs: build
+    # Configure required reviewers for this environment in GitHub settings:
+    # Settings -> Environments -> production -> Required reviewers
+    environment:
+      name: production
+      url: https://asdevhckcalmridge28.azurewebsites.net
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'asdevhckcalmridge28'
+          slot-name: 'Production'
+          package: .
+          startup-command: 'node server.js'
+
+      # Set after deploy so the setting is present when the new container starts
+      - name: Configure App Service environment
+        run: |
+          az webapp config appsettings set \
+            --name asdevhckcalmridge28 \
+            --resource-group rgwedsodev-hckcalmridge28 \
+            --settings NODE_ENV=production

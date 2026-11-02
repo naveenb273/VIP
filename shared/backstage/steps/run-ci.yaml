@@ -1,0 +1,19 @@
+id: runci
+name: Run CI pipeline
+action: http:backstage:request
+input:
+  method: POST
+  path: proxy/gp-ado/${{ parameters.azureDevopsOrganization }}/${{ parameters.azureDevOpsProject }}/_apis/pipelines/${{ steps.createpipeline.output.body['id'] }}/runs?api-version=7.0
+  body: |
+    {
+      "stagesToSkip": [],
+      "resources": {
+        "repositories": {
+          "self": {
+            "refName": "refs/heads/main"
+          }
+        }
+      },
+      "templateParameters": {},
+      "variables": {}
+    }

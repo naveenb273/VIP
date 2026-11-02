@@ -1,31 +1,50 @@
-.home-header { margin-bottom: 28px; }
-.home-header__title {
-  font-family: var(--font-display); font-size: 30px; font-weight: 800;
-  color: var(--color-text-primary); margin-bottom: 6px;
-}
-.home-header__sub { font-size: 14.5px; color: var(--color-text-muted); }
-.ideas-grid {
+/* ── VCDK Home ───────────────────────────────────────────────────────────── */
+.home-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: var(--sp-6);
 }
-.loading-grid {
+
+.ideas-grid, .loading-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 280px));
+  gap: var(--sp-5);
+  justify-content: start;
 }
+
+/* VCDK Skeleton shimmer */
 .skeleton-card {
-  height: 280px; border-radius: var(--radius-xl);
-  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-surface-3) 50%, var(--color-surface-2) 75%);
+  height: 280px;
+  border-radius: var(--radius-0);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s ease infinite;
+  border: 1px solid var(--color-border-subtle);
 }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.empty-state { text-align: center; padding: 80px 0; color: var(--color-text-faint); }
-.empty-state__icon { font-size: 56px; margin-bottom: 16px; }
-.empty-state__title { font-size: 18px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 8px; }
-.empty-state__sub { font-size: 14px; }
+
+.empty-state { text-align: center; padding: 80px 0; }
+.empty-state__icon  { font-size: 44px; margin-bottom: var(--sp-6); }
+.empty-state__title {
+  font-size: var(--text-h4); font-weight: 500; color: var(--color-text-subtle);
+  margin-bottom: var(--sp-3); letter-spacing: -0.0125rem;
+}
+.empty-state__sub { font-size: var(--text-caption-1); color: var(--color-text-subtlest); letter-spacing: 0.0175rem; }
+
+@media (max-width: 960px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+}
+
 @media (max-width: 480px) {
-  .ideas-grid { grid-template-columns: 1fr; }
-  .home-header__title { font-size: 22px; }
+  .ideas-grid, .loading-grid {
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+  }
 }

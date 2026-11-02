@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { IdeaService } from '../../services/idea.service';
@@ -7,13 +8,14 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { CollaborationPanelComponent } from '../collaboration/collaboration-panel.component';
 import { EditIdeaModalComponent } from '../edit-idea-modal/edit-idea-modal.component';
+import { CopyLinkModalComponent } from '../shared/copy-link-modal/copy-link-modal.component';
 
 const COVER_EMOJIS = ['🌱','💡','🌿','🔬','♻️','🌍','⚡','🌊','🍃','🔋'];
 
 @Component({
   selector: 'app-idea-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CollaborationPanelComponent, EditIdeaModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CollaborationPanelComponent, EditIdeaModalComponent, CopyLinkModalComponent, IconComponent],
   templateUrl: './idea-detail.component.html',
   styleUrls: ['./idea-detail.component.scss']
 })
@@ -34,38 +36,45 @@ export class IdeaDetailComponent implements OnInit {
 
   isOwner = computed(() => {
     const idea = this.currentIdea();
-    return idea ? this.auth.isOwner(idea.authorId) : false;
+    return idea ? this.auth.isOwner(idea.authorInformation.email) : false;
   });
 
   isOwnerOrCollaborator = computed(() => {
     const idea = this.currentIdea();
     const user = this.auth.currentUser();
     if (!idea || !user) return false;
-    if (this.auth.isOwner(idea.authorId)) return true;
-    return idea.collaborators.some(c => c.name === user.name || c.email === user.email);
+    if (this.auth.isOwner(idea.authorInformation.email)) return true;
+    return idea.collaboratorInformation.members.some(c =>
+      c.name === user.name || c.email === user.email || (!!c.objectId && c.objectId === user.id)
+    );
   });
+
+  canAccessPatent = computed(() => this.isOwnerOrCollaborator() || this.auth.isAdmin());
+
+  patentAdminView = computed(() => this.auth.isAdmin() && !this.isOwnerOrCollaborator());
 
   patentSearchQuery = computed(() => {
     const idea = this.currentIdea();
     if (!idea) return '';
-    return encodeURIComponent([idea.title, ...idea.tags].join(' '));
+    return encodeURIComponent([idea.ideaInformation.title, ...idea.ideaInformation.tags].join(' '));
   });
 
   hasRequested = computed(() => {
     const idea = this.currentIdea();
     const user = this.auth.currentUser();
     if (!idea || !user) return false;
-    return idea.collaborationRequests.some(r => r.requesterId === user.id);
+    return idea.content.collaborationRequests.some(r => (r.requesterId ?? '').toLowerCase() === user.email.toLowerCase());
   });
 
   coverEmoji = computed(() => {
     const idea = this.currentIdea();
     if (!idea) return '🌱';
-    return COVER_EMOJIS[idea.title.charCodeAt(0) % COVER_EMOJIS.length];
+    return COVER_EMOJIS[idea.ideaInformation.title.charCodeAt(0) % COVER_EMOJIS.length];
   });
 
   newComment  = '';
   shareFlash  = false;
+  shareIdeaId = signal<string | null>(null);
   showEdit    = false;
   collabMsg   = '';
   uploadError = '';
@@ -74,9 +83,32 @@ export class IdeaDetailComponent implements OnInit {
 
   goBack(): void { this.router.navigate(['/']); }
 
-  async onShare(): Promise<void> {
+  onShare(): void {
     const id = this.currentIdea()?.id;
-    if (!id) return;
+    if (!id) {
+      return;
+    }
+    this.shareIdeaId.set(id);
+  }
+
+  closeShareModal(): void {
+    this.shareIdeaId.set(null);
+  }
+
+  shareUrl(): string {
+    const id = this.shareIdeaId();
+    if (!id) {
+      return '';
+    }
+    return `${window.location.origin}/idea/${id}`;
+  }
+
+  async onShareCopied(): Promise<void> {
+    const id = this.shareIdeaId();
+    if (!id) {
+      return;
+    }
+
     this.shareFlash = true;
     await this.svc.incrementShare(id);
     setTimeout(() => this.shareFlash = false, 800);
@@ -85,7 +117,7 @@ export class IdeaDetailComponent implements OnInit {
   async postComment(): Promise<void> {
     const t = this.newComment.trim(), id = this.currentIdea()?.id, user = this.auth.currentUser();
     if (!t || !id || !user) return;
-    await this.svc.addComment(id, t, user.name, user.avatar, user.avatarColor);
+    await this.svc.addComment(id, t, user.name, user.avatar, user.avatarColor, user.email, user.id);
     this.newComment = '';
   }
 
@@ -103,7 +135,7 @@ export class IdeaDetailComponent implements OnInit {
       reader.onload = () => this.svc.addAttachment(ideaId, {
         name: file.name, size: file.size, type: file.type,
         dataUrl: reader.result as string, uploadedBy: user.name,
-        uploadedDate: new Date().toISOString().slice(0, 10)
+        uploadedDate: new Date().toISOString()
       });
       reader.readAsDataURL(file);
     });
@@ -130,7 +162,7 @@ export class IdeaDetailComponent implements OnInit {
     if (!idea || !user || !this.collabMsg.trim()) return;
 
     await this.svc.sendCollaborationRequest(idea.id, {
-      requesterId: user.id, requesterName: user.name,
+      requesterId: user.email, requesterObjectId: user.id, requesterName: user.name,
       requesterAvatar: user.avatar, requesterAvatarColor: user.avatarColor,
       message: this.collabMsg.trim()
     });
@@ -139,13 +171,19 @@ export class IdeaDetailComponent implements OnInit {
     this.notifs.add({
       type: 'collab_request',
       title: 'New Collaboration Request',
-      message: `${user.name} wants to collaborate on "${idea.title}"`,
-      ideaId: idea.id, ideaTitle: idea.title,
+      message: `${user.name} wants to collaborate on "${idea.ideaInformation.title}"`,
+      ideaId: idea.id, ideaTitle: idea.ideaInformation.title,
       fromUser: user.name, fromAvatar: user.avatar, fromAvatarColor: user.avatarColor
     });
 
     // Email to owner via mailto — fix: now actually fires for user->owner direction
-    this.sendCollabRequestMailToOwner(idea.author, idea.title, idea.description, user.name, this.collabMsg.trim());
+    this.sendCollabRequestMailToOwner(
+      idea.authorInformation.name,
+      idea.ideaInformation.title,
+      idea.ideaInformation.description,
+      user.name,
+      this.collabMsg.trim()
+    );
 
     this.collabMsg = '';
   }

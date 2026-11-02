@@ -1,0 +1,14 @@
+site_name: Hackspace
+
+nav:
+- Introduction: index.md
+- Using Gen AI Hub: using-gen-ai-hub.md
+
+plugins:
+  - techdocs-core
+
+markdown_extensions:
+  - admonition
+
+repo_url: https://github.com/VolvoGroup-Internal/developer-platform-112511-techdocs
+edit_uri: edit/master/techDocs/docs/ 

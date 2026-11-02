@@ -1,32 +1,69 @@
-<div class="home-header">
-  <h1 class="home-header__title">{{ sortTitles[sort()] }}</h1>
-  <p class="home-header__sub">
-    {{ displayed().length }} idea{{ displayed().length !== 1 ? 's' : '' }} from the community
-  </p>
+<div class="home-layout">
+  <app-ideas-side-menu
+    [search]="search()"
+    [sort]="sort()"
+    [sortDirection]="sortDirection()"
+    [tagFilter]="tagFilter()"
+    [emailFilter]="emailFilter()"
+    (searchChange)="onSearchChange($event)"
+    (sortChange)="onSortClick($event)"
+    (tagFilterChange)="onTagFilterChange($event)"
+    (emailFilterChange)="onEmailFilterChange($event)"
+  />
+  <section class="home-content">
+    @if (ideaService.loading()) {
+      <div class="loading-grid">
+        @for (n of [1,2,3,4,5,6]; track n) { <div class="skeleton-card"></div> }
+      </div>
+    } @else if (totalIdeas() > 0) {
+      <div class="ideas-grid">
+        @for (idea of pagedIdeas(); track idea.id) {
+          <app-idea-card
+            [idea]="idea"
+            [liked]="ideaService.isLiked(idea.id)"
+            [favorited]="ideaService.isFavorited(idea.id)"
+            (like)="ideaService.toggleLike(idea.id)"
+            (share)="openShareModal(idea.id, idea.ideaInformation.title)"
+            (favorite)="ideaService.toggleFavorite(idea.id)"
+            (cardClick)="openDetail(idea.id)"
+          />
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <app-shared-pagination
+          [totalItems]="totalIdeas()"
+          [itemLabel]="'ideas'"
+          [currentPage]="currentPage()"
+          [totalPages]="totalPages()"
+          [rangeStart]="rangeStart()"
+          [rangeEnd]="rangeEnd()"
+          [pages]="visiblePages()"
+          [jumpPage]="jumpPage()"
+          (first)="goFirst()"
+          (prev)="previousPage()"
+          (pageSelect)="goToPage($event)"
+          (next)="nextPage()"
+          (last)="goLast()"
+          (jumpPageChange)="onJumpPageChange($event)"
+          (jumpSubmit)="submitJump()"
+        />
+      }
+    } @else {
+      <div class="empty-state">
+        <div class="empty-state__icon">🌱</div>
+        <div class="empty-state__title">No ideas found</div>
+        <div class="empty-state__sub">Try a different search or be the first to share an idea!</div>
+      </div>
+    }
+  </section>
 </div>
 
-@if (ideaService.loading()) {
-  <div class="loading-grid">
-    @for (n of [1,2,3,4,5,6]; track n) { <div class="skeleton-card"></div> }
-  </div>
-} @else if (displayed().length > 0) {
-  <div class="ideas-grid">
-    @for (idea of displayed(); track idea.id) {
-      <app-idea-card
-        [idea]="idea"
-        [liked]="ideaService.isLiked(idea.id)"
-        [favorited]="ideaService.isFavorited(idea.id)"
-        (like)="ideaService.toggleLike(idea.id)"
-        (share)="ideaService.incrementShare(idea.id)"
-        (favorite)="ideaService.toggleFavorite(idea.id)"
-        (cardClick)="openDetail(idea.id)"
-      />
-    }
-  </div>
-} @else {
-  <div class="empty-state">
-    <div class="empty-state__icon">🌱</div>
-    <div class="empty-state__title">No ideas found</div>
-    <div class="empty-state__sub">Try a different search or be the first to share an idea!</div>
-  </div>
+@if (shareIdeaId()) {
+  <app-copy-link-modal
+    [heading]="'Share Idea'"
+    [link]="shareUrl()"
+    (copied)="onShareCopied()"
+    (close)="closeShareModal()"
+  />
 }

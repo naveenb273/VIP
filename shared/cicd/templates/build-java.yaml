@@ -1,0 +1,67 @@
+# Shared Java Build Template
+# Reusable template for building Java applications
+
+parameters:
+  - name: javaVersion
+    type: string
+    default: '17'
+  - name: artifactName
+    type: string
+    default: 'App'
+  - name: runTests
+    type: boolean
+    default: true
+  - name: includeAppInsightsAgent
+    type: boolean
+    default: true
+  - name: appInsightsAgentVersion
+    type: string
+    default: '3.6.2'
+  - name: workingDirectory
+    type: string
+    default: '.'
+
+steps:
+  - task: JavaToolInstaller@0
+    displayName: 'Install Java ${{ parameters.javaVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.javaVersion }}'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
+  - ${{ if eq(parameters.runTests, true) }}:
+    - pwsh: |
+        mvn clean
+        mvn test
+      displayName: 'Run unit tests'
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+  - pwsh: |
+      mvn clean
+      mvn package
+    displayName: 'Build application'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+  - ${{ if eq(parameters.includeAppInsightsAgent, true) }}:
+    - bash: |
+        mkdir artifacts
+        wget https://github.com/microsoft/ApplicationInsights-Java/releases/download/${{ parameters.appInsightsAgentVersion }}/applicationinsights-agent-${{ parameters.appInsightsAgentVersion }}.jar -P $(System.DefaultWorkingDirectory)/${{ parameters.workingDirectory }}/artifacts
+        cp ./target/*.jar $(System.DefaultWorkingDirectory)/${{ parameters.workingDirectory }}/artifacts/app.jar
+        
+        zip $(Build.ArtifactStagingDirectory)/to_deploy.zip ./artifacts/*.jar
+        ls $(Build.ArtifactStagingDirectory)
+      displayName: 'Package with Application Insights agent'
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+    - publish: $(Build.ArtifactStagingDirectory)/to_deploy.zip
+      artifact: ${{ parameters.artifactName }}
+
+  - ${{ if eq(parameters.includeAppInsightsAgent, false) }}:
+    - bash: |
+        mkdir -p $(Build.ArtifactStagingDirectory)
+        cp ./target/*.jar $(Build.ArtifactStagingDirectory)/app.jar
+      displayName: 'Package application'
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: ${{ parameters.artifactName }}

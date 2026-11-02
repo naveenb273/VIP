@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -30,6 +31,22 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./components/auth/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'admin',
+    canActivate: [MsalGuard, adminGuard],
+    loadComponent: () => import('./components/admin/admin.component').then(m => m.AdminComponent),
+    children: [
+      {
+        path: 'seed',
+        loadComponent: () => import('./components/admin/seed-data/seed-data.component').then(m => m.SeedDataComponent)
+      },
+      {
+        path: 'access',
+        loadComponent: () => import('./components/admin/admin-access/admin-access.component').then(m => m.AdminAccessComponent)
+      },
+      { path: '', pathMatch: 'full', redirectTo: 'seed' }
+    ]
   },
   { path: '**', redirectTo: '' }
 ];

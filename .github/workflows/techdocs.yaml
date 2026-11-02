@@ -1,0 +1,23 @@
+name: techdocs
+
+on: 
+  pull_request:
+    paths:
+      - techDocs/**
+  push:
+    branches:
+      - main
+
+jobs:
+  tech-docs:
+    name: Generate techDocs
+    runs-on:
+      group: Backstage-Runners
+    steps:
+    - name: techdocs
+      uses: VolvoGroup-Internal/devsecops-shared-github/actions/backstage/techdocs@main
+      with:
+        techdocs-client-id: ${{ secrets.BACKSTAGE_TECHDOCS_PROD_CLIENT_ID }}
+        techdocs-client-secret: ${{ secrets.BACKSTAGE_TECHDOCS_PROD_CLIENT_SECRET }}
+        entity-name: hckcalmridge28
+        entity-kind: "component"

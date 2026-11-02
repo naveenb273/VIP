@@ -1,0 +1,38 @@
+# react-spa-scaffolding
+
+> Lightweight React SPA scaffold for rapid prototyping with Volvo Group Design System (VGDS).
+
+Stack: React 19, Vite 8, TailwindCSS 4 + @volvo/vcdk-tailwind, @volvo/vcdk-react v2, @volvo/vcdk v10, TypeScript 6
+
+## Source Structure
+
+src/ - application source
+src/App.tsx - root component with ThemeProvider, routing, theme switching
+src/main.tsx - entry point with BrowserRouter
+src/index.css - TailwindCSS + VGDS theme token imports
+src/Navigation.tsx - side menu navigation
+src/pages/ - route-level page components (HomePage, FleetPage)
+public/ - static assets
+
+## Key Files
+
+AGENTS.md - AI agent operation guide, skills index
+.github/copilot-instructions.md - always-on Copilot guardrails
+.github/instructions/vgds-components.instructions.md - VGDS component rules for *.tsx
+.github/agents/prototyper.agent.md - custom prototyping agent (recommended for UI work)
+.vscode/mcp.json - GitHub + Figma MCP server config
+.agents/skills/ - 7 VGDS design system skills
+skills-lock.json - VGDS skill integrity tracking
+vite.config.ts - Vite + TailwindCSS plugin + path aliases
+
+## Design System
+
+Uses @volvo/vcdk (core web components v10), @volvo/vcdk-react (React wrappers v2), @volvo/vcdk-tailwind (Tailwind preset).
+Import components from direct subpaths: `import { Button } from "@volvo/vcdk-react/Button"`
+TailwindCSS for layout/spacing only. VGDS tokens for colors/typography via CSS custom properties.
+Themes: volvo-light, volvo-dark, mack-light, mack-dark, renault-light, renault-dark
+
+## Commands
+
+npm start - Start dev server (port 5173)
+npm run authenticate - Authenticate to Volvo private npm registry

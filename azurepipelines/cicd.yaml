@@ -1,0 +1,202 @@
+# VIP — Volvo Ideas Platform
+# Hackspace CI/CD — Angular 19 frontend + Express backend
+# Based on: hckcalmridge28 hackspace template
+
+parameters:
+  - name: aetDevTest
+    displayName: 'Test Mode for AET Dev Team'
+    type: boolean
+    default: false
+
+trigger:
+  branches:
+    include:
+    - '*'
+    exclude:
+    - 'dependabot/*'
+  paths:
+    exclude:
+    - '*.md'
+    - '**/*.md'
+    - 'techDocs/**'
+
+pr: none
+
+variables:
+  - group: jvs-sandbox-cd-dev
+  - group: jvs-sandbox-ci
+  - template: migration-variables.yaml
+  - name: System.Debug
+    value: true
+  - name: DEPLOY_APPROVER_EMAIL
+    value: naveen.basavarajappa@volvo.com
+  - ${{ if eq(parameters.aetDevTest, true) }}:
+    - name: TF_VAR_shared_app_service_plan_id
+      value: '/subscriptions/445b0818-90bc-4af0-911a-c61f511c7693/resourceGroups/rg-shared-resources/providers/Microsoft.Web/serverFarms/apwedsodev-hackspaces-shared'
+
+pool:
+  vmImage: ubuntu-22.04
+
+stages:
+  - stage: CI
+    jobs:
+      - job: BuildApp
+        displayName: 'Build Angular App'
+        steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            displayName: 'Use Node.js 20.x'
+            inputs:
+              versionSpec: '20.x'
+
+          - bash: |
+              npm --version
+              node --version
+            displayName: 'Show Node.js versions'
+
+          - bash: |
+              cat > $(Build.SourcesDirectory)/.npmrc <<'NPMRC'
+              registry=https://registry.npmjs.org/
+              @volvo:registry=https://pkgs.dev.azure.com/FPC-Department/DevSecOpsPlatform-SoftwareTemplates-Sandbox/_packaging/VES-SoftwareTemplatesSandbox/npm/registry/
+              NPMRC
+            displayName: 'Generate .npmrc for CI'
+
+          - task: npmAuthenticate@0
+            displayName: 'Authenticate npm for @volvo registry'
+            inputs:
+              workingFile: $(Build.SourcesDirectory)/.npmrc
+
+          # Cache downloaded npm packages (not node_modules) across pipeline runs.
+          # Use explicit lockfiles: a recursive **/package-lock.json glob can traverse
+          # generated node_modules trees, consuming all agent memory during key resolution.
+          - task: Cache@2
+            displayName: 'Cache npm packages'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | backend/package-lock.json,frontend/package-lock.json,microfrontends/agentic-chatbot/package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: $(Pipeline.Workspace)/.npm
+
+          # Install dependencies from lockfiles for reproducible, faster CI builds.
+          # npm ci avoids dependency resolution and uses the shared package cache.
+          - bash: npm ci --ignore-scripts --prefer-offline --cache $(Pipeline.Workspace)/.npm
+            displayName: 'Install backend dependencies'
+            workingDirectory: $(Build.SourcesDirectory)/backend
+
+          - bash: npm ci --ignore-scripts --prefer-offline --cache $(Pipeline.Workspace)/.npm
+            displayName: 'Install frontend dependencies'
+            workingDirectory: $(Build.SourcesDirectory)/frontend
+
+          - bash: npm ci --ignore-scripts --prefer-offline --cache $(Pipeline.Workspace)/.npm
+            displayName: 'Install agentic-chatbot dependencies'
+            workingDirectory: $(Build.SourcesDirectory)/microfrontends/agentic-chatbot
+
+          # Build the agentic-chatbot MFE and copy its bundle into the host's
+          # assets folder (frontend/src/assets/mfe/agentic-chatbot). This MUST run
+          # before the host build so the chatbot bundle is included in the SPA.
+          - bash: npm run build:host
+            displayName: 'Build agentic-chatbot MFE and copy to host'
+            workingDirectory: $(Build.SourcesDirectory)/microfrontends/agentic-chatbot
+
+          # Build Angular app (outputs to frontend/dist/vip) — now includes the MFE asset
+          - bash: npx ng build --configuration production
+            displayName: 'Build Angular app (production)'
+            workingDirectory: $(Build.SourcesDirectory)/frontend
+
+          # Package: Angular dist + Express backend together
+          - bash: |
+              set -euo pipefail
+              stagingDir="$(Build.ArtifactStagingDirectory)/app"
+              rm -rf "$stagingDir"
+              mkdir -p "$stagingDir/backend"
+
+              # Copy backend source without the development node_modules tree.
+              cp -r backend/data backend/routes backend/services "$stagingDir/backend/"
+              cp backend/server.js backend/package.json backend/package-lock.json "$stagingDir/backend/"
+
+              # The local root-package dependency is only a workspace convenience and
+              # causes recursive node_modules nesting when included in a deployment.
+              npm pkg delete dependencies.vip-hackspace --prefix "$stagingDir/backend"
+              npm install --omit=dev --ignore-scripts --prefix "$stagingDir/backend"
+
+              # Copy Angular build output (including the chatbot MFE) as backend public folder.
+              mkdir -p "$stagingDir/backend/public"
+              cp -r frontend/dist/vip/browser/. "$stagingDir/backend/public/"
+
+              # Verify the chatbot bundle made it into the deployable package.
+              if [ ! -f "$stagingDir/backend/public/assets/mfe/agentic-chatbot/main.js" ]; then
+                echo "ERROR: agentic-chatbot bundle missing from build output." >&2
+                exit 1
+              fi
+
+              # Create a fresh deployment zip and report its size.
+              rm -f $(Build.ArtifactStagingDirectory)/vip-hackspace.zip
+              cd "$stagingDir"
+              zip -qr $(Build.ArtifactStagingDirectory)/vip-hackspace.zip .
+              echo "Deployment package size:"
+              du -h $(Build.ArtifactStagingDirectory)/vip-hackspace.zip
+            displayName: 'Package Angular + Express for deployment'
+            workingDirectory: $(Build.SourcesDirectory)
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish App artifact'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/vip-hackspace.zip'
+              artifact: 'App'
+              publishLocation: 'pipeline'
+
+      - job: ValidateTerraform
+        displayName: 'Validate Terraform'
+        steps:
+          - checkout: self
+          - template: ../shared/cicd/templates/terraform-validate.yaml
+            parameters:
+              workingDirectory: terraform
+
+  - stage: CD
+    dependsOn: [CI]
+    # Run CD for every triggered branch after CI succeeds; deployment remains approval-gated.
+    condition: succeeded()
+    jobs:
+      - job: WaitForApproval
+        displayName: 'Manual approval before deploy'
+        pool: server
+        timeoutInMinutes: 4320
+        steps:
+          - task: ManualValidation@0
+            displayName: 'Approve deployment to Azure App Service'
+            timeoutInMinutes: 1440
+            inputs:
+              notifyUsers: '$(DEPLOY_APPROVER_EMAIL)'
+              instructions: 'Review build and Terraform plan outputs. Approve to continue deployment; reject or timeout to stop deployment.'
+              onTimeout: 'reject'
+
+      - job: DeployTerraform
+        displayName: 'Create infrastructure'
+        dependsOn: WaitForApproval
+        steps:
+          - checkout: self
+          - template: ../shared/cicd/templates/terraform-apply.yaml
+            parameters:
+              workingDirectory: terraform
+              workspaceName: ${{ variables['MIGRATION_APP_NAME'] }}
+              azureSubscription: ${{ variables['AZURE_SERVICE_CONNECTION'] }}
+
+      - job: DeployApp
+        displayName: 'Deploy App'
+        dependsOn: DeployTerraform
+        variables:
+          rg_name: $[ dependencies.DeployTerraform.outputs['DeployTerraform.rg_name'] ]
+          web_app_name: $[ dependencies.DeployTerraform.outputs['DeployTerraform.web_app_name'] ]
+        steps:
+          - template: ../shared/cicd/templates/deploy-appservice.yaml
+            parameters:
+              azureSubscription: ${{ variables['AZURE_SERVICE_CONNECTION'] }}
+              resourceGroupName: $(rg_name)
+              webAppName: $(web_app_name)
+              artifactName: 'App'
+              packageName: 'vip-hackspace.zip'
+              useCliDeploy: true
+              # Express backend serves Angular SPA + API
+              startUpCommand: 'node /home/site/wwwroot/backend/server.js'

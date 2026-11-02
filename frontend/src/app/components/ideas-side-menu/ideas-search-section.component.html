@@ -1,0 +1,21 @@
+<label class="home-sidebar__label" for="idea-search">Search ideas</label>
+<div class="home-sidebar__field">
+  <input
+    id="idea-search"
+    type="text"
+    class="home-sidebar__search"
+    placeholder="Search ideas..."
+    [ngModel]="search"
+    (ngModelChange)="onSearchChange($event)"
+  />
+  @if (search) {
+    <button
+      type="button"
+      class="home-sidebar__clear-btn"
+      aria-label="Clear search"
+      (click)="clearSearch()"
+    >
+      ×
+    </button>
+  }
+</div>

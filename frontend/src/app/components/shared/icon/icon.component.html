@@ -1,0 +1,21 @@
+@if (original) {
+  <img
+    class="app-icon app-icon--original"
+    [class.app-icon--spin]="spin"
+    [src]="src"
+    [alt]="label"
+    [style.width.px]="size"
+    [style.height.px]="size"
+  />
+} @else {
+  <span
+    class="app-icon"
+    [class.app-icon--spin]="spin"
+    [style.--app-icon-url]="maskUrl"
+    [style.width.px]="size"
+    [style.height.px]="size"
+    [attr.role]="label ? 'img' : null"
+    [attr.aria-label]="label || null"
+    [attr.aria-hidden]="label ? null : 'true'"
+  ></span>
+}

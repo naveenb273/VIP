@@ -1,0 +1,1 @@
+shared_app_service_plan_id = "/subscriptions/445b0818-90bc-4af0-911a-c61f511c7693/resourceGroups/rg-shared-resources/providers/Microsoft.Web/serverFarms/apwedsodev-hackspaces-shared"

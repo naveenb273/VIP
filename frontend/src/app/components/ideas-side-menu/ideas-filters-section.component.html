@@ -1,0 +1,45 @@
+<div class="home-sidebar__label home-sidebar__label--section">Filter by</div>
+
+<label class="home-sidebar__label" for="idea-filter-tags">Tags</label>
+<div class="home-sidebar__field">
+  <input
+    id="idea-filter-tags"
+    type="text"
+    class="home-sidebar__search"
+    placeholder="e.g. AI, Sustainability"
+    [ngModel]="tagFilter"
+    (ngModelChange)="onTagFilterChange($event)"
+  />
+  @if (tagFilter) {
+    <button
+      type="button"
+      class="home-sidebar__clear-btn"
+      aria-label="Clear tags filter"
+      (click)="clearTagFilter()"
+    >
+      ×
+    </button>
+  }
+</div>
+
+<label class="home-sidebar__label" for="idea-filter-email">User mail ID</label>
+<div class="home-sidebar__field home-sidebar__field--last">
+  <input
+    id="idea-filter-email"
+    type="text"
+    class="home-sidebar__search"
+    placeholder="name@volvo.com"
+    [ngModel]="emailFilter"
+    (ngModelChange)="onEmailFilterChange($event)"
+  />
+  @if (emailFilter) {
+    <button
+      type="button"
+      class="home-sidebar__clear-btn"
+      aria-label="Clear user mail filter"
+      (click)="clearEmailFilter()"
+    >
+      ×
+    </button>
+  }
+</div>

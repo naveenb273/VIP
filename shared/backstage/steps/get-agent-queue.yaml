@@ -1,0 +1,7 @@
+id: getagentqueue
+name: Get agent pool queue id
+action: http:backstage:request
+input:
+  method: GET
+  path: |
+    proxy/gp-ado/${{ parameters.azureDevopsOrganization }}/${{ parameters.azureDevOpsProject }}/_apis/distributedtask/queues?queueName=${{ parameters.azureDevopsAgentPool }}

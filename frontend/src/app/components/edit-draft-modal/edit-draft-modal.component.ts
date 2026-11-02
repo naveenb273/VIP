@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { FormsModule } from '@angular/forms';
 import { IdeaService } from '../../services/idea.service';
 import { AuthService } from '../../services/auth.service';
@@ -9,7 +10,7 @@ import { CoverPositionerComponent } from '../cover-positioner/cover-positioner.c
 @Component({
   selector: 'app-edit-draft-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, CoverPositionerComponent],
+  imports: [CommonModule, FormsModule, CoverPositionerComponent, IconComponent],
   templateUrl: './edit-draft-modal.component.html',
   styleUrls: ['./edit-draft-modal.component.scss']
 })
@@ -33,13 +34,13 @@ export class EditDraftModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = {
-      title:         this.draft.title === 'Untitled Draft' ? '' : this.draft.title,
-      description:   this.draft.description,
-      tags:          [...this.draft.tags],
-      coverImage:    this.draft.coverImage    ?? '',
-      coverPosition: this.draft.coverPosition ?? '50% 50%'
+      title:         this.draft.ideaInformation.title === 'Untitled Draft' ? '' : this.draft.ideaInformation.title,
+      description:   this.draft.ideaInformation.description,
+      tags:          [...this.draft.ideaInformation.tags],
+      coverImage:    this.draft.ideaInformation.coverImage    ?? '',
+      coverPosition: this.draft.ideaInformation.coverPosition ?? '50% 50%'
     };
-    this.coverPreview = this.draft.coverImage ?? '';
+    this.coverPreview = this.draft.ideaInformation.coverImage ?? '';
   }
 
   isValid(): boolean { return !!(this.form.title.trim() && this.form.description.trim()); }
@@ -83,10 +84,11 @@ export class EditDraftModalComponent implements OnInit {
       id:            this.draft.id,
       title:         this.form.title || 'Untitled Draft',
       description:   this.form.description,
-      author:        this.draft.author,
-      authorId:      this.draft.authorId,
-      avatar:        this.draft.avatar,
-      avatarColor:   this.draft.avatarColor,
+      author:        this.draft.authorInformation.name,
+      authorEmail:   this.draft.authorInformation.email,
+      authorObjectId:this.draft.authorInformation.objectId,
+      avatar:        this.draft.authorInformation.avatar,
+      avatarColor:   this.draft.authorInformation.avatarColor,
       tags:          this.form.tags,
       coverImage:    this.form.coverImage,
       coverPosition: this.form.coverPosition
@@ -102,10 +104,11 @@ export class EditDraftModalComponent implements OnInit {
         id:            this.draft.id,
         title:         this.form.title,
         description:   this.form.description,
-        author:        this.draft.author,
-        authorId:      this.draft.authorId,
-        avatar:        this.draft.avatar,
-        avatarColor:   this.draft.avatarColor,
+        author:        this.draft.authorInformation.name,
+        authorEmail:   this.draft.authorInformation.email,
+        authorObjectId:this.draft.authorInformation.objectId,
+        avatar:        this.draft.authorInformation.avatar,
+        avatarColor:   this.draft.authorInformation.avatarColor,
         tags:          this.form.tags,
         coverImage:    this.form.coverImage,
         coverPosition: this.form.coverPosition

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
@@ -8,11 +8,15 @@ import { EventType, AuthenticationResult } from '@azure/msal-browser';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { ThemeService } from './services/theme.service';
 import { AuthService } from './services/auth.service';
+import { MicrofrontendLoaderService } from './services/microfrontend-loader.service';
+
+const CHATBOT_BUNDLE_URL = 'assets/mfe/agentic-chatbot/main.js';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule, RouterOutlet, NavbarComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -24,34 +28,22 @@ export class AppComponent implements OnInit, OnDestroy {
   private router    = inject(Router);
   private msal      = inject(MsalService);
   private broadcast = inject(MsalBroadcastService);
+  private mfe       = inject(MicrofrontendLoaderService);
 
   showNav = signal(false);
+  chatbotReady = signal(false);
 
   ngOnInit(): void {
     // Apply theme token on document root
     document.documentElement.setAttribute('data-theme', this.theme.theme());
 
-    // MSAL must be initialised before any interaction can occur
-    this.msal.instance.initialize().then(() => {
+    // Agentic Chatbot micro-frontend is built separately and registers its own custom element
+    this.mfe.load(CHATBOT_BUNDLE_URL)
+      .then(() => this.chatbotReady.set(true))
+      .catch(err => console.warn('[VIP] Agentic Chatbot micro-frontend unavailable', err));
 
-      // Process the redirect result that MSAL writes back into the browser
-      this.msal.instance.handleRedirectPromise()
-        .then(result => {
-          if (result?.account) {
-            this.msal.instance.setActiveAccount(result.account);
-            this.auth.hydrateFromMsal(result.account, result.accessToken);
-          } else {
-            // Page refresh — restore the active account that is already cached
-            const accounts = this.msal.instance.getAllAccounts();
-            if (accounts.length) {
-              this.msal.instance.setActiveAccount(accounts[0]);
-              this.auth.hydrateFromMsal(accounts[0]);
-            }
-          }
-        })
-        .catch(err => console.error('[MSAL] handleRedirectPromise error:', err));
-
-    });
+    // MSAL init + redirect handling happens in the app initialiser (app.config.ts),
+    // so guards never run before the signed-in account is known.
 
     // Also listen for popup / silent success events
     this.broadcast.msalSubject$
@@ -63,7 +55,7 @@ export class AppComponent implements OnInit, OnDestroy {
         const result = e.payload as AuthenticationResult;
         if (result?.account) {
           this.msal.instance.setActiveAccount(result.account);
-          this.auth.hydrateFromMsal(result.account, result.accessToken);
+          void this.auth.hydrateFromMsal(result.account, result.accessToken);
         }
       });
 

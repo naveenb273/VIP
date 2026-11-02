@@ -1,0 +1,71 @@
+# Shared Node.js Build Template
+# Reusable template for building Node.js / React applications
+
+parameters:
+  - name: nodeVersion
+    type: string
+    default: '24.x'
+  - name: workingDirectory
+    type: string
+    default: 'app'
+  - name: artifactName
+    type: string
+    default: 'App'
+  - name: runTests
+    type: boolean
+    default: true
+
+steps:
+  - task: NodeTool@0
+    displayName: 'Use Node.js ${{ parameters.nodeVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.nodeVersion }}'
+
+  - bash: |
+      npm --version
+      node --version
+    displayName: 'Show Node.js versions'
+
+  # Authenticate with Azure Artifacts for @volvo packages
+  # Uses service connection credentials from Azure Pipelines
+  - task: npmAuthenticate@0
+    displayName: 'Authenticate npm for @volvo registry'
+    inputs:
+      workingFile: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}/.npmrc
+
+  - bash: |
+      npm install
+    displayName: 'npm install (with @volvo package authentication)'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+  - ${{ if eq(parameters.runTests, true) }}:
+    - bash: |
+        if [ -f "package.json" ] && grep -q '"test"' package.json; then
+          npm run test
+        else
+          echo "No test script found in package.json, skipping tests"
+        fi
+      displayName: 'Run tests (if configured)'
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+      continueOnError: true
+
+  - bash: |
+      if grep -q '"build"' package.json; then
+        npm run build
+      else
+        echo "No build script found, using vite build directly..."
+        npx vite build
+      fi
+    displayName: 'Build application'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+  - bash: |
+      mkdir -p $(Build.ArtifactStagingDirectory)/dist
+      cp -r dist/* $(Build.ArtifactStagingDirectory)/dist/
+      ls -la $(Build.ArtifactStagingDirectory)/dist
+    displayName: 'Package build artifacts'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{ parameters.artifactName }}
+    displayName: 'Publish artifacts'

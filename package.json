@@ -1,11 +1,27 @@
 {
-  "name": "vip-monorepo",
-  "version": "1.0.0",
+  "name": "vip-hackspace",
+  "description": "VIP — Volvo Ideas Platform · Volvo Group Hackspace · Angular 19 + Express",
   "private": true,
+  "version": "1.0.0",
+  "author": "Digital Foundation",
+  "keywords": ["vgds", "volvo", "angular", "prototype", "hackspace"],
   "scripts": {
-    "install:all":  "npm install --prefix backend && npm install --prefix frontend",
-    "start:api":    "npm start --prefix backend",
-    "start:ui":     "npm start --prefix frontend",
-    "dev":          "npm run start:api & npm run start:ui"
+    "preinstall":     "node scripts/authenticate.mjs",
+    "authenticate":   "node scripts/authenticate.mjs",
+    "setup":          "npm install --prefix backend && npm install --prefix frontend && npm install --prefix microfrontends/agentic-chatbot",
+    "start:api":      "node scripts/start-api.mjs",
+    "start:api:once": "npm start --prefix backend",
+    "start:ui":       "npm start --prefix frontend",
+    "start:chatbot":  "npm start --prefix microfrontends/agentic-chatbot",
+    "start":          "npm run build:chatbot && start cmd /k \"npm run start:api\" && start cmd /k \"npm run start:ui\"",
+    "dev":            "npm run start",
+    "build":          "npm run build:chatbot && npm run build --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:chatbot":  "npm run build:host --prefix microfrontends/agentic-chatbot",
+    "install:all":    "npm install --prefix backend && npm install --prefix frontend && npm install --prefix microfrontends/agentic-chatbot"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm":  ">=9"
   }
 }

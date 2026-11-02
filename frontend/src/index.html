@@ -2,25 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>VIP</title>
+  <title>VIP — Volvo Ideas Platform</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel='icon' type='image/x-icon' href='favicon.ico' />
+  <meta name="theme-color" content="#141414">
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+
+  <!--
+    VCDK Typography:
+    Primary:  Volvo Novum (loaded locally if available in /assets/fonts/)
+    Fallback: Roboto — the official VCDK font-family value
+  -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display=swap" rel="stylesheet">
+
   <style>
+    /* Volvo Novum — loaded locally if font files are in /assets/fonts/ */
     @font-face {
-        font-family: "Volvo Novum Regular";
-        src: url("assets/fonts/VolvoNovum-Regular.woff2") format("truetype");
+      font-family: 'Volvo Novum';
+      src: url('assets/fonts/VolvoNovum-Regular.woff2') format('woff2'),
+           url('assets/fonts/VolvoNovum-Regular.woff') format('woff');
+      font-weight: 400; font-style: normal; font-display: swap;
     }
     @font-face {
-        font-family: "Volvo Novum Medium";
-        src: url("assets/fonts/VolvoNovum-Medium.woff2") format("truetype");
+      font-family: 'Volvo Novum';
+      src: url('assets/fonts/VolvoNovum-Medium.woff2') format('woff2'),
+           url('assets/fonts/VolvoNovum-Medium.woff') format('woff');
+      font-weight: 500 700; font-style: normal; font-display: swap;
     }
+    /* Prevent FOUC */
+    html { background: #f7f7f7; }
+    html[data-theme='dark'] { background: #141414; }
   </style>
 </head>
 <body>
-<app-root></app-root>
+  <app-root></app-root>
 </body>
 </html>

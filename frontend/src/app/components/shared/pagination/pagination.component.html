@@ -1,0 +1,78 @@
+<div class="pagination" role="navigation" aria-label="Pagination">
+  <div class="pagination__meta">
+    Showing {{ rangeStart }}-{{ rangeEnd }} of {{ totalItems }} {{ itemLabel }}
+  </div>
+
+  <div class="pagination__controls">
+    <button
+      type="button"
+      class="pagination__btn pagination__btn--nav"
+      [disabled]="currentPage <= 1"
+      (click)="first.emit()"
+    >
+      First
+    </button>
+
+    <button
+      type="button"
+      class="pagination__btn pagination__btn--nav"
+      [disabled]="currentPage <= 1"
+      (click)="prev.emit()"
+    >
+      Prev
+    </button>
+
+    <div class="pagination__number-list">
+      @for (page of pages; track page) {
+        <button
+          type="button"
+          class="pagination__btn"
+          [class.pagination__btn--active]="page === currentPage"
+          (click)="pageSelect.emit(page)"
+        >
+          {{ page }}
+        </button>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="pagination__btn pagination__btn--nav"
+      [disabled]="currentPage >= totalPages"
+      (click)="next.emit()"
+    >
+      Next
+    </button>
+
+    <button
+      type="button"
+      class="pagination__btn pagination__btn--nav"
+      [disabled]="currentPage >= totalPages"
+      (click)="last.emit()"
+    >
+      Last
+    </button>
+
+    <div class="pagination__jump">
+      <label class="pagination__jump-label" for="pagination-jump">Go to</label>
+      <input
+        id="pagination-jump"
+        type="number"
+        min="1"
+        [max]="totalPages"
+        class="pagination__jump-input"
+        [ngModel]="jumpPage"
+        (ngModelChange)="onJumpPageChange($event)"
+        (keydown.enter)="jumpSubmit.emit()"
+      />
+      <button
+        type="button"
+        class="pagination__btn pagination__btn--go"
+        [disabled]="totalPages <= 1"
+        (click)="jumpSubmit.emit()"
+      >
+        Go
+      </button>
+    </div>
+  </div>
+</div>

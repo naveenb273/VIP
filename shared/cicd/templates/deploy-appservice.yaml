@@ -1,0 +1,146 @@
+# Shared App Service Deployment Template
+# Reusable template for deploying applications to Azure App Service
+
+parameters:
+  - name: azureSubscription
+    type: string
+    default: '142964-Dev0d-dsoplatformsanbox'
+  - name: appType
+    type: string
+    default: 'webAppLinux'
+  - name: webAppName
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: artifactName
+    type: string
+    default: 'App'
+  - name: packageName
+    type: string
+    default: 'to_deploy.zip'
+  - name: deploymentMethod
+    type: string
+    default: 'runFromPackage'
+  - name: startUpCommand
+    type: string
+    default: ''
+  - name: useCliDeploy
+    type: boolean
+    default: false
+
+steps:
+  - download: current
+    artifact: ${{ parameters.artifactName }}
+    patterns: '**/*.zip'
+
+  - ${{ if eq(parameters.useCliDeploy, true) }}:
+    - task: AzureCLI@2
+      displayName: 'Deploy to App Service (CLI)'
+      inputs:
+        azureSubscription: ${{ parameters.azureSubscription }}
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Fail immediately if deployment fails. Without this, a failed az webapp
+          # deploy can be masked by a successful config-set command that follows it.
+          set -euo pipefail
+
+          RG='${{ parameters.resourceGroupName }}'
+          APP='${{ parameters.webAppName }}'
+          PKG='$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packageName }}'
+          STARTUP='${{ parameters.startUpCommand }}'
+
+          # 1) Set the startup command before deploy only when it changed. A config
+          #    write recycles the container, so an unconditional write can overlap the
+          #    deployment restart and make startup tracking hit its 10-minute limit.
+          if [ -n "$STARTUP" ]; then
+            CURRENT_STARTUP=$(az webapp config show \
+              --resource-group "$RG" \
+              --name "$APP" \
+              --query appCommandLine \
+              --output tsv)
+            if [ "$CURRENT_STARTUP" != "$STARTUP" ]; then
+              echo "Updating startup command before deploy..."
+              az webapp config set \
+                --resource-group "$RG" \
+                --name "$APP" \
+                --startup-file "$STARTUP" \
+                --output none
+            else
+              echo "Startup command is already current; avoiding an unnecessary restart."
+            fi
+          fi
+
+          # 2) Deploy with a retry. --clean removes stale Oryx files such as a root
+          #    node_modules.tar.gz that otherwise gets extracted on every cold start.
+          #    Startup tracking is disabled because build 147865 proved it can report
+          #    failure after 10 minutes even when the worker successfully starts.
+          deploy() {
+            az webapp deploy \
+              --resource-group "$RG" \
+              --name "$APP" \
+              --src-path "$PKG" \
+              --type zip \
+              --clean true \
+              --restart true \
+              --track-status false \
+              --async false \
+              --timeout 600000 \
+              --output none
+          }
+
+          if ! deploy; then
+            echo "First deploy attempt failed; waiting briefly, then retrying once..."
+            sleep 15
+            deploy
+          fi
+
+          echo "Deployment accepted by App Service; container startup continues independently."
+
+    - task: AzureCLI@2
+      displayName: 'Verify App Service health'
+      inputs:
+        azureSubscription: ${{ parameters.azureSubscription }}
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          set -uo pipefail
+
+          APP='${{ parameters.webAppName }}'
+          HEALTH_URL="https://${APP}.azurewebsites.net/api/health"
+
+          # Poll the app URL to confirm the worker actually serves traffic, without
+          # depending on the deploy-time startup probe that produced a false failure
+          # in build 147865.
+          #
+          # NOTE: The app uses App Service Easy Auth, so an unauthenticated request is
+          # redirected to Microsoft login (HTTP 302/401/403). Any of those responses
+          # still proves the Node worker is up and responding. A 5xx or a connection
+          # failure (000) means the worker is not serving. Up to ~5 minutes.
+          for attempt in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$HEALTH_URL" || echo 000)
+            case "$code" in
+              200|301|302|401|403)
+                echo "Health check passed: worker is responding (HTTP ${code}) on attempt ${attempt}."
+                exit 0
+                ;;
+            esac
+            echo "Health check attempt ${attempt}/20: HTTP ${code}. Retrying in 15s..."
+            sleep 15
+          done
+
+          echo "ERROR: ${APP} did not respond with a healthy status after retries." >&2
+          exit 1
+
+  - ${{ if eq(parameters.useCliDeploy, false) }}:
+    - task: AzureWebApp@1
+      displayName: 'Deploy to App Service'
+      inputs:
+        azureSubscription: ${{ parameters.azureSubscription }}
+        appType: ${{ parameters.appType }}
+        appName: ${{ parameters.webAppName }}
+        resourceGroupName: ${{ parameters.resourceGroupName }}
+        package: $(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packageName }}
+        deploymentMethod: ${{ parameters.deploymentMethod }}
+        ${{ if ne(parameters.startUpCommand, '') }}:
+          startUpCommand: ${{ parameters.startUpCommand }}

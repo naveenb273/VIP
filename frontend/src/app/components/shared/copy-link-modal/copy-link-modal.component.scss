@@ -1,0 +1,82 @@
+.copy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.copy-modal {
+  width: min(560px, 100%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-4);
+  padding: 20px;
+}
+
+.copy-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.copy-modal__title {
+  margin: 0;
+  font-size: var(--text-subtitle-2);
+  color: var(--color-text);
+}
+
+.copy-modal__close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.copy-modal__row {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 8px;
+}
+
+.copy-modal__input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  padding: 0 12px;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-1);
+}
+
+.copy-modal__copy {
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-link);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.copy-modal__message {
+  margin-top: 10px;
+  color: var(--color-success, #00820d);
+  font-size: var(--text-caption-1);
+}
+
+@media (max-width: 640px) {
+  .copy-modal {
+    padding: 16px;
+  }
+}

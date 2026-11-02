@@ -1,219 +1,348 @@
 import { Router } from 'express';
-import { readDb, writeDb, uid, today } from '../data/db.helper.js';
+import { readDb, writeDb, uid } from '../data/db.helper.js';
 
 export const ideasRouter = Router();
 
-// GET /api/ideas
+const nowIso = () => new Date().toISOString();
+const normalizeEmail = (value = '') => String(value).trim().toLowerCase();
+
+const findIdea = (db, id) => db.ideas.find((idea) => idea.id === id);
+
+const appendHistory = (idea, event) => {
+  idea.audit.history = Array.isArray(idea.audit.history) ? idea.audit.history : [];
+  idea.audit.history.push(event);
+};
+
+const touchAudit = (idea, actorEmail, actorObjectId, action = 'updated', changedFields = [], note) => {
+  const actor = normalizeEmail(actorEmail) || idea.audit.updatedBy || idea.audit.createdBy || idea.authorInformation.email;
+  const at = nowIso();
+  idea.audit.updatedBy = actor;
+  if (actorObjectId) {
+    idea.audit.updatedByObjectId = actorObjectId;
+  }
+  idea.audit.updatedDate = at;
+  appendHistory(idea, {
+    action,
+    changedBy: actor,
+    changedByObjectId: actorObjectId,
+    changedAt: at,
+    changedFields,
+    note
+  });
+};
+
 ideasRouter.get('/', (_req, res) => {
-  res.json(readDb().ideas);
+  const db = readDb();
+  res.json(db.ideas);
 });
 
-// GET /api/ideas/:id
 ideasRouter.get('/:id', (req, res) => {
-  const idea = readDb().ideas.find(i => i.id === req.params.id);
+  const idea = findIdea(readDb(), req.params.id);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
   res.json(idea);
 });
 
-// POST /api/ideas
 ideasRouter.post('/', (req, res) => {
-  const { title, description, author, authorId, avatar, avatarColor, tags, coverImage, coverPosition } = req.body;
-  if (!title?.trim() || !description?.trim() || !author || !authorId)
-    return res.status(400).json({ error: 'title, description, author, authorId required' });
+  const {
+    title,
+    description,
+    author,
+    authorEmail,
+    authorObjectId,
+    avatar,
+    avatarColor,
+    tags,
+    coverImage,
+    coverPosition
+  } = req.body;
+  const ownerEmail = normalizeEmail(authorEmail);
 
-  const db   = readDb();
+  if (!title?.trim() || !description?.trim() || !author?.trim() || !ownerEmail) {
+    return res.status(400).json({ error: 'title, description, author, authorEmail required' });
+  }
+
+  const createdAt = nowIso();
+  const ownerAvatar = avatar || author.slice(0, 2).toUpperCase();
+  const ownerColor = avatarColor || '#6366f1';
+
   const idea = {
     id: `idea-${uid()}`,
-    title: title.trim(), description: description.trim(),
-    author, authorId,
-    avatar:      avatar      || author.slice(0, 2).toUpperCase(),
-    avatarColor: avatarColor || '#6366f1',
-    date: today(), tags: Array.isArray(tags) ? tags : [],
-    coverImage: coverImage || '',
-    coverPosition: coverPosition || '50% 50%',
-    status: 'published',
-    attachments: [], likes: 0, shares: 0, comments: [],
-    collaborators: [{
-      id: uid(), name: author,
-      avatar: avatar || author.slice(0, 2).toUpperCase(),
-      avatarColor: avatarColor || '#6366f1',
-      role: 'Owner', email: '', joinedDate: today()
-    }],
-    collaborationNotes: [],
-    collaborationRequests: []
+    ideaInformation: {
+      title: title.trim(),
+      description: description.trim(),
+      tags: Array.isArray(tags) ? tags : [],
+      status: 'published',
+      coverImage: coverImage || '',
+      coverPosition: coverPosition || '50% 50%'
+    },
+    authorInformation: {
+      name: author.trim(),
+      email: ownerEmail,
+      objectId: authorObjectId,
+      avatar: ownerAvatar,
+      avatarColor: ownerColor
+    },
+    collaboratorInformation: {
+      members: [{
+        id: ownerEmail,
+        name: author.trim(),
+        objectId: authorObjectId,
+        avatar: ownerAvatar,
+        avatarColor: ownerColor,
+        role: 'Owner',
+        email: ownerEmail,
+        joinedDate: createdAt
+      }]
+    },
+    engagement: { likes: 0, shares: 0, likedBy: [], favoritedBy: [], sharedBy: [] },
+    content: { attachments: [], comments: [], collaborationNotes: [], collaborationRequests: [] },
+    audit: {
+      createdBy: ownerEmail,
+      createdByObjectId: authorObjectId,
+      createdDate: createdAt,
+      updatedBy: ownerEmail,
+      updatedByObjectId: authorObjectId,
+      updatedDate: createdAt,
+      history: [{ action: 'created', changedBy: ownerEmail, changedByObjectId: authorObjectId, changedAt: createdAt }]
+    }
   };
 
+  const db = readDb();
   db.ideas.unshift(idea);
   writeDb(db);
   res.status(201).json(idea);
 });
 
-// PUT /api/ideas/:id  (owner only — enforced on frontend via authorId check)
 ideasRouter.put('/:id', (req, res) => {
-  const db  = readDb();
-  const idx = db.ideas.findIndex(i => i.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Idea not found' });
+  const db = readDb();
+  const idea = findIdea(db, req.params.id);
+  if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
-  const { title, description, tags, coverImage, coverPosition } = req.body;
-  if (title?.trim())       db.ideas[idx].title       = title.trim();
-  if (description?.trim()) db.ideas[idx].description = description.trim();
-  if (Array.isArray(tags)) db.ideas[idx].tags        = tags;
-  if (coverImage !== undefined) db.ideas[idx].coverImage = coverImage;
-  if (coverPosition !== undefined) db.ideas[idx].coverPosition = coverPosition;
+  const { title, description, tags, coverImage, coverPosition, updatedBy, updatedByObjectId } = req.body;
+  const changedFields = [];
 
+  if (title?.trim()) { idea.ideaInformation.title = title.trim(); changedFields.push('ideaInformation.title'); }
+  if (description?.trim()) { idea.ideaInformation.description = description.trim(); changedFields.push('ideaInformation.description'); }
+  if (Array.isArray(tags)) { idea.ideaInformation.tags = tags; changedFields.push('ideaInformation.tags'); }
+  if (coverImage !== undefined) { idea.ideaInformation.coverImage = coverImage; changedFields.push('ideaInformation.coverImage'); }
+  if (coverPosition !== undefined) { idea.ideaInformation.coverPosition = coverPosition; changedFields.push('ideaInformation.coverPosition'); }
+
+  touchAudit(idea, updatedBy, updatedByObjectId, 'idea_updated', changedFields);
   writeDb(db);
-  res.json(db.ideas[idx]);
+  res.json(idea);
 });
 
-// DELETE /api/ideas/:id
 ideasRouter.delete('/:id', (req, res) => {
-  const db     = readDb();
-  const before = db.ideas.length;
-  db.ideas     = db.ideas.filter(i => i.id !== req.params.id);
-  if (db.ideas.length === before) return res.status(404).json({ error: 'Idea not found' });
+  const { deletedBy, deletedByObjectId, reason } = req.body || {};
+  const db = readDb();
+  const idx = db.ideas.findIndex((idea) => idea.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Idea not found' });
+
+  const idea = db.ideas[idx];
+  touchAudit(idea, deletedBy, deletedByObjectId, 'deleted', ['idea'], reason || 'hard delete');
+  db.archivedIdeas = Array.isArray(db.archivedIdeas) ? db.archivedIdeas : [];
+  db.archivedIdeas.push({
+    ...idea,
+    deletedAt: nowIso(),
+    deletedBy: normalizeEmail(deletedBy) || idea.audit.updatedBy,
+    deletedByObjectId
+  });
+  db.ideas.splice(idx, 1);
+
   writeDb(db);
   res.json({ deleted: req.params.id });
 });
 
-// ── Comments ──────────────────────────────────────────────────────────────────
-
-// POST /api/ideas/:id/comments
 ideasRouter.post('/:id/comments', (req, res) => {
-  const { text, author, avatar, avatarColor } = req.body;
-  if (!text?.trim() || !author) return res.status(400).json({ error: 'text and author required' });
+  const { text, author, avatar, avatarColor, authorEmail, authorObjectId } = req.body;
+  if (!text?.trim() || !author?.trim() || !normalizeEmail(authorEmail)) {
+    return res.status(400).json({ error: 'text, author, authorEmail required' });
+  }
 
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.id);
+  const db = readDb();
+  const idea = findIdea(db, req.params.id);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
   const comment = {
-    id: uid(), author,
-    avatar:      avatar      || 'U',
+    id: uid(),
+    author: author.trim(),
+    commenterEmail: normalizeEmail(authorEmail),
+    commenterObjectId: authorObjectId,
+    avatar: avatar || 'U',
     avatarColor: avatarColor || '#6366f1',
-    text: text.trim(), date: today()
+    text: text.trim(),
+    date: nowIso()
   };
-  idea.comments.push(comment);
+
+  idea.content.comments.push(comment);
+  touchAudit(idea, authorEmail, authorObjectId, 'comment_added', ['content.comments']);
   writeDb(db);
   res.status(201).json(comment);
 });
 
-// ── Collaborators ─────────────────────────────────────────────────────────────
-
-// POST /api/ideas/:id/collaborators
 ideasRouter.post('/:id/collaborators', (req, res) => {
-  const { name, email, avatar, avatarColor, role } = req.body;
-  if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+  const { name, email, objectId, avatar, avatarColor, role, addedBy, addedByObjectId } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.id);
+  if (!name?.trim() || !normalizedEmail) return res.status(400).json({ error: 'name and email required' });
+
+  const db = readDb();
+  const idea = findIdea(db, req.params.id);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
-  const c = {
-    id: uid(), name: name.trim(), email: email || '',
-    avatar:      avatar      || name.slice(0, 2).toUpperCase(),
+  if (idea.collaboratorInformation.members.some((member) => member.email === normalizedEmail)) {
+    return res.status(409).json({ error: 'Collaborator already exists' });
+  }
+
+  const collaborator = {
+    id: normalizedEmail,
+    name: name.trim(),
+    objectId,
+    avatar: avatar || name.slice(0, 2).toUpperCase(),
     avatarColor: avatarColor || '#6366f1',
-    role: role || 'Contributor', joinedDate: today()
+    role: role || 'Contributor',
+    email: normalizedEmail,
+    joinedDate: nowIso()
   };
-  idea.collaborators.push(c);
+
+  idea.collaboratorInformation.members.push(collaborator);
+  touchAudit(idea, addedBy || normalizedEmail, addedByObjectId, 'collaborator_added', ['collaboratorInformation.members']);
   writeDb(db);
-  res.status(201).json(c);
+  res.status(201).json(collaborator);
 });
 
-// DELETE /api/ideas/:ideaId/collaborators/:collabId
 ideasRouter.delete('/:ideaId/collaborators/:collabId', (req, res) => {
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.ideaId);
+  const { removedBy, removedByObjectId } = req.body || {};
+  const db = readDb();
+  const idea = findIdea(db, req.params.ideaId);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
-  idea.collaborators = idea.collaborators.filter(c => c.id !== req.params.collabId);
+  const collabKey = normalizeEmail(req.params.collabId);
+  const before = idea.collaboratorInformation.members.length;
+  idea.collaboratorInformation.members = idea.collaboratorInformation.members.filter((member) => member.id !== collabKey && member.email !== collabKey);
+
+  if (idea.collaboratorInformation.members.length === before) {
+    return res.status(404).json({ error: 'Collaborator not found' });
+  }
+
+  touchAudit(idea, removedBy, removedByObjectId, 'collaborator_removed', ['collaboratorInformation.members']);
   writeDb(db);
   res.json({ deleted: req.params.collabId });
 });
 
-// ── Collaboration Notes ───────────────────────────────────────────────────────
-
-// POST /api/ideas/:id/notes
 ideasRouter.post('/:id/notes', (req, res) => {
-  const { text, author, avatar, avatarColor } = req.body;
+  const { text, author, avatar, avatarColor, authorEmail, authorObjectId } = req.body;
   if (!text?.trim()) return res.status(400).json({ error: 'text required' });
 
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.id);
+  const db = readDb();
+  const idea = findIdea(db, req.params.id);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
   const note = {
-    id: uid(), author: author || 'Unknown',
-    avatar:      avatar      || 'U',
+    id: uid(),
+    author: author || 'Unknown',
+    avatar: avatar || 'U',
     avatarColor: avatarColor || '#6366f1',
-    text: text.trim(), date: today(), pinned: false
+    text: text.trim(),
+    date: nowIso(),
+    pinned: false
   };
-  idea.collaborationNotes.push(note);
+
+  idea.content.collaborationNotes.push(note);
+  touchAudit(idea, authorEmail, authorObjectId, 'collaboration_note_added', ['content.collaborationNotes']);
   writeDb(db);
   res.status(201).json(note);
 });
 
-// PATCH /api/ideas/:ideaId/notes/:noteId/pin  — toggle pin
 ideasRouter.patch('/:ideaId/notes/:noteId/pin', (req, res) => {
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.ideaId);
+  const { updatedBy, updatedByObjectId } = req.body || {};
+  const db = readDb();
+  const idea = findIdea(db, req.params.ideaId);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
-  const note = idea.collaborationNotes.find(n => n.id === req.params.noteId);
+
+  const note = idea.content.collaborationNotes.find((item) => item.id === req.params.noteId);
   if (!note) return res.status(404).json({ error: 'Note not found' });
 
   note.pinned = !note.pinned;
+  touchAudit(idea, updatedBy, updatedByObjectId, 'collaboration_note_pin_toggled', ['content.collaborationNotes']);
   writeDb(db);
   res.json(note);
 });
 
-// ── Collaboration Requests ────────────────────────────────────────────────────
-
-// POST /api/ideas/:id/requests
 ideasRouter.post('/:id/requests', (req, res) => {
-  const { requesterId, requesterName, requesterAvatar, requesterAvatarColor, message } = req.body;
-  if (!requesterId || !requesterName || !message?.trim())
-    return res.status(400).json({ error: 'requesterId, requesterName, message required' });
+  const { requesterId, requesterObjectId, requesterName, requesterAvatar, requesterAvatarColor, message } = req.body;
+  const requesterEmail = normalizeEmail(requesterId);
 
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.id);
+  if (!requesterEmail || !requesterName?.trim() || !message?.trim()) {
+    return res.status(400).json({ error: 'requesterId, requesterName, message required' });
+  }
+
+  const db = readDb();
+  const idea = findIdea(db, req.params.id);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
-  if (idea.collaborationRequests.some(r => r.requesterId === requesterId && r.status === 'pending'))
+  if (idea.content.collaborationRequests.some((request) => request.requesterId === requesterEmail && request.status === 'pending')) {
     return res.status(409).json({ error: 'Request already pending' });
+  }
 
   const request = {
-    id: uid(), requesterId, requesterName,
-    requesterAvatar:      requesterAvatar      || 'U',
+    id: uid(),
+    requesterId: requesterEmail,
+    requesterObjectId,
+    requesterName: requesterName.trim(),
+    requesterAvatar: requesterAvatar || 'U',
     requesterAvatarColor: requesterAvatarColor || '#6366f1',
-    message: message.trim(), date: today(), status: 'pending'
+    message: message.trim(),
+    date: nowIso(),
+    status: 'pending'
   };
-  idea.collaborationRequests.push(request);
+
+  idea.content.collaborationRequests.push(request);
+  touchAudit(idea, requesterEmail, requesterObjectId, 'collaboration_request_added', ['content.collaborationRequests']);
   writeDb(db);
   res.status(201).json(request);
 });
 
-// PATCH /api/ideas/:ideaId/requests/:reqId  — accept | decline
 ideasRouter.patch('/:ideaId/requests/:reqId', (req, res) => {
-  const { status } = req.body;
-  if (!['accepted', 'declined'].includes(status))
+  const { status, decidedBy, decidedByObjectId, decisionReason } = req.body;
+  if (!['accepted', 'declined'].includes(status)) {
     return res.status(400).json({ error: "status must be 'accepted' or 'declined'" });
+  }
 
-  const db   = readDb();
-  const idea = db.ideas.find(i => i.id === req.params.ideaId);
+  const db = readDb();
+  const idea = findIdea(db, req.params.ideaId);
   if (!idea) return res.status(404).json({ error: 'Idea not found' });
-  const req_ = idea.collaborationRequests.find(r => r.id === req.params.reqId);
-  if (!req_) return res.status(404).json({ error: 'Request not found' });
 
-  req_.status = status;
+  const request = idea.content.collaborationRequests.find((item) => item.id === req.params.reqId);
+  if (!request) return res.status(404).json({ error: 'Request not found' });
 
-  if (status === 'accepted' && !idea.collaborators.some(c => c.name === req_.requesterName)) {
-    idea.collaborators.push({
-      id: uid(), name: req_.requesterName,
-      avatar:      req_.requesterAvatar,
-      avatarColor: req_.requesterAvatarColor,
-      role: 'Contributor', email: '', joinedDate: today()
+  request.status = status;
+  request.decidedBy = normalizeEmail(decidedBy);
+  request.decidedByObjectId = decidedByObjectId;
+  request.decidedAt = nowIso();
+  request.decisionReason = decisionReason;
+
+  if (status === 'accepted' && !idea.collaboratorInformation.members.some((member) => member.email === request.requesterId)) {
+    idea.collaboratorInformation.members.push({
+      id: request.requesterId,
+      name: request.requesterName,
+      objectId: request.requesterObjectId,
+      avatar: request.requesterAvatar,
+      avatarColor: request.requesterAvatarColor,
+      role: 'Contributor',
+      email: request.requesterId,
+      joinedDate: nowIso()
     });
   }
 
+  touchAudit(
+    idea,
+    decidedBy || request.requesterId,
+    decidedByObjectId,
+    status === 'accepted' ? 'collaboration_request_accepted' : 'collaboration_request_declined',
+    ['content.collaborationRequests', 'collaboratorInformation.members'],
+    decisionReason
+  );
   writeDb(db);
-  res.json(req_);
+  res.json(request);
 });

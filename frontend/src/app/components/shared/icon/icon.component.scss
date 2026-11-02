@@ -1,0 +1,36 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  line-height: 0;
+}
+
+/* The mask is filled with `currentColor`, so icons inherit colour, hover states and theme. */
+.app-icon {
+  display: block;
+  flex: none;
+  background-color: currentColor;
+  mask-image: var(--app-icon-url);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-image: var(--app-icon-url);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.app-icon--original {
+  background-color: transparent;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+.app-icon--spin {
+  animation: app-icon-spin 0.8s linear infinite;
+}
+
+@keyframes app-icon-spin {
+  to { transform: rotate(360deg); }
+}

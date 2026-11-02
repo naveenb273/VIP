@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup",
+      "type": "shell",
+      "command": "npm run setup",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Install dependencies (authenticates automatically)",
+      "icon": {
+        "id": "package",
+        "color": "terminal.ansiGreen"
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "reevaluateOnRerun": true,
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "Authenticate: ADO Feed",
+      "type": "shell",
+      "command": "npm run authenticate",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "detail": "Authenticate to the Azure DevOps npm feed for @volvo packages",
+      "icon": {
+        "id": "key",
+        "color": "terminal.ansiGreen"
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "reevaluateOnRerun": true
+      }
+    }
+  ]
+}

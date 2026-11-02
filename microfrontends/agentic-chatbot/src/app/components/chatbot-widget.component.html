@@ -1,0 +1,54 @@
+<div class="chatbot" [class.chatbot--open]="open()">
+  @if (open()) {
+    <section class="panel" role="dialog" [attr.aria-label]="name() + ' chat'">
+      <header class="panel__header">
+        <span class="panel__avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="panel__title">{{ name() }}</span>
+        <button type="button" class="panel__close" aria-label="Close chat" (click)="toggle()">&times;</button>
+      </header>
+
+      <div class="panel__log" role="log" aria-live="polite">
+        @for (message of messages(); track message.id) {
+          <div class="message" [class.message--user]="message.role === 'user'">
+            @if (message.role === 'bot') {
+              <div class="bubble bubble--formatted" [innerHTML]="renderMarkdown(message.text)"></div>
+            } @else {
+              <p class="bubble bubble--user">{{ message.text }}</p>
+            }
+            @if (message.citations?.length) {
+              <div class="citations" aria-label="Sources">
+                @for (citation of message.citations; track citation.ideaId) {
+                  <span class="citation">{{ citation.title }} ({{ citation.ideaId }})</span>
+                }
+              </div>
+            }
+          </div>
+        }
+        @if (thinking()) {
+          <p class="bubble bubble--thinking">…</p>
+        }
+      </div>
+
+      <form class="panel__composer" (ngSubmit)="send()">
+        <input
+          class="panel__input"
+          type="text"
+          name="draft"
+          autocomplete="off"
+          placeholder="Ask a question…"
+          aria-label="Message"
+          [(ngModel)]="draft" />
+        <button class="panel__send" type="submit" [disabled]="thinking()">Send</button>
+      </form>
+    </section>
+  }
+
+  <button
+    type="button"
+    class="launcher"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="open() ? 'Close ' + name() : 'Open ' + name()"
+    (click)="toggle()">
+    <span class="launcher__glyph" aria-hidden="true">{{ open() ? '×' : '✦' }}</span>
+  </button>
+</div>

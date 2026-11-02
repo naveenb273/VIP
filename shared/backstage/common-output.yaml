@@ -1,0 +1,13 @@
+# =============================================================================
+# Common Output for Hackspace Templates
+# =============================================================================
+# Import in backstageTemplate.yaml using:
+#   output:
+#     $yaml: ../shared/backstage/common-output.yaml
+# =============================================================================
+
+links:
+  - title: GitHub Repository
+    url: https://github.com/VolvoGroup-Internal/${{ parameters.name }}
+  - title: ADO pipelines
+    url: https://dev.azure.com/${{parameters.azureDevopsOrganization}}/${{parameters.azureDevOpsProject}}/_build?definitionScope=${{ parameters.name }}

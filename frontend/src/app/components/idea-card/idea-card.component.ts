@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { Idea } from '../../models/idea.model';
 
 const COVER_EMOJIS = ['🌱','💡','🌿','🔬','♻️','🌍','⚡','🌊','🍃','🔋'];
@@ -7,7 +8,7 @@ const COVER_EMOJIS = ['🌱','💡','🌿','🔬','♻️','🌍','⚡','🌊','
 @Component({
   selector: 'app-idea-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IconComponent],
   templateUrl: './idea-card.component.html',
   styleUrls: ['./idea-card.component.scss']
 })
@@ -25,13 +26,11 @@ export class IdeaCardComponent {
   shareFlash = false;
 
   coverEmoji(): string {
-    const idx = this.idea.title.charCodeAt(0) % COVER_EMOJIS.length;
+    const idx = this.idea.ideaInformation.title.charCodeAt(0) % COVER_EMOJIS.length;
     return COVER_EMOJIS[idx];
   }
 
   onShare(): void {
-    this.shareFlash = true;
     this.share.emit();
-    setTimeout(() => this.shareFlash = false, 800);
   }
 }

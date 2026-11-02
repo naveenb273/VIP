@@ -1,0 +1,10 @@
+id: fetch-shared
+name: Fetch Shared Templates
+action: fetch:template
+input:
+  url: ../shared
+  targetPath: ./shared
+  copyWithoutTemplating:
+    - '**/*'
+  values:
+    name: ${{ parameters.name }}

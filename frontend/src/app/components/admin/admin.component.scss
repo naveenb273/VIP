@@ -1,0 +1,8 @@
+.admin-page { max-width: 1400px; margin: 0 auto; padding-bottom: var(--sp-12); }
+.admin-page__header { margin-bottom: var(--sp-5); }
+.admin-page__badge { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--color-highlight); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.0175rem; text-transform: uppercase; }
+h1 { margin: var(--sp-2) 0 0; color: var(--color-text); font-size: var(--text-h2); font-weight: 500; }
+.admin-page__nav { display: flex; gap: var(--sp-6); margin-bottom: var(--sp-7); border-bottom: 1px solid var(--color-border); }
+.admin-page__nav-link { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 42px; border-bottom: 2px solid transparent; color: var(--color-text-subtlest); font-size: var(--text-caption-1); text-decoration: none; }
+.admin-page__nav-link:hover { color: var(--color-text); }
+.admin-page__nav-link--active { border-bottom-color: var(--color-highlight); color: var(--color-text); font-weight: 500; }

@@ -1,0 +1,21 @@
+<div class="copy-modal-overlay" (click)="close.emit()">
+  <div class="copy-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Copy idea link">
+    <div class="copy-modal__header">
+      <h2 class="copy-modal__title">{{ heading }}</h2>
+      <button class="copy-modal__close" type="button" (click)="close.emit()" aria-label="Close copy link modal">
+        <app-icon name="close" size="14" />
+      </button>
+    </div>
+
+    <div class="copy-modal__row">
+      <input class="copy-modal__input" type="text" [value]="link" readonly aria-label="Idea share link" />
+      <button class="copy-modal__copy" type="button" (click)="copyLink()" aria-label="Copy idea link">
+        <app-icon name="copy" size="16" />
+      </button>
+    </div>
+
+    @if (copiedMessage) {
+      <div class="copy-modal__message">Link copied</div>
+    }
+  </div>
+</div>

@@ -1,0 +1,18 @@
+{
+  "servers": {
+    "GitHub": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "Figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "Chrome DevTools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["chrome-devtools-mcp@latest"]
+    }
+  },
+  "inputs": []
+}

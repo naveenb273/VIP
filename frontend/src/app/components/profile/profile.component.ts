@@ -40,9 +40,12 @@ export class ProfileComponent {
   ];
 
   createdIdeas = computed(() => {
-    const uid = this.user()?.id;
-    return uid
-      ? this.svc.ideas().filter(i => i.authorId === uid && (i.status ?? 'published') === 'published')
+    const email = (this.user()?.email ?? '').toLowerCase();
+    return email
+      ? this.svc.ideas().filter(i =>
+        (i.authorInformation.email ?? '').toLowerCase() === email &&
+        (i.ideaInformation.status ?? 'published') === 'published'
+      )
       : [];
   });
 
@@ -55,8 +58,8 @@ export class ProfileComponent {
     const user = this.user();
     if (!user) return [];
     return this.svc.ideas().filter(i =>
-      i.authorId !== user.id &&
-      i.collaborators.some(c => c.name === user.name || c.email === user.email)
+      (i.authorInformation.email ?? '').toLowerCase() !== user.email.toLowerCase() &&
+      i.collaboratorInformation.members.some(c => c.name === user.name || c.email === user.email)
     );
   });
 

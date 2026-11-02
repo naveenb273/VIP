@@ -1,0 +1,41 @@
+<div class="home-sidebar__label">Sort by</div>
+<div class="home-sidebar__sort-list">
+  <button
+    type="button"
+    class="home-sidebar__sort-item"
+    [class.home-sidebar__sort-item--active]="sort === 'recent'"
+    (click)="setSort('recent')"
+  >
+    <span class="home-sidebar__sort-main">
+      <span class="home-sidebar__sort-icon">🕒</span>
+      <span>Recent</span>
+    </span>
+    <span class="home-sidebar__sort-order" aria-hidden="true">{{ orderIcon('recent') }}</span>
+  </button>
+
+  <button
+    type="button"
+    class="home-sidebar__sort-item"
+    [class.home-sidebar__sort-item--active]="sort === 'liked'"
+    (click)="setSort('liked')"
+  >
+    <span class="home-sidebar__sort-main">
+      <span class="home-sidebar__sort-icon">❤️</span>
+      <span>Most Liked</span>
+    </span>
+    <span class="home-sidebar__sort-order" aria-hidden="true">{{ orderIcon('liked') }}</span>
+  </button>
+
+  <button
+    type="button"
+    class="home-sidebar__sort-item"
+    [class.home-sidebar__sort-item--active]="sort === 'collaborated'"
+    (click)="setSort('collaborated')"
+  >
+    <span class="home-sidebar__sort-main">
+      <span class="home-sidebar__sort-icon">🤝</span>
+      <span>Most Collaborated</span>
+    </span>
+    <span class="home-sidebar__sort-order" aria-hidden="true">{{ orderIcon('collaborated') }}</span>
+  </button>
+</div>

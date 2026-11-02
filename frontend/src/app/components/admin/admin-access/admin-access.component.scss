@@ -1,0 +1,29 @@
+.access-page { max-width: 880px; }
+.access-page__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); }
+h2 { margin: 0 0 var(--sp-2); color: var(--color-text); font-size: var(--text-h3); font-weight: 500; }
+p { margin: 0; color: var(--color-text-subtlest); font-size: var(--text-caption-1); }
+.refresh-button, .remove-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-subtle); cursor: pointer; }
+.refresh-button { width: 36px; height: 36px; }
+.refresh-button:hover:not(:disabled), .remove-button:hover:not(:disabled) { background: var(--color-surface-2); color: var(--color-text); }
+.refresh-button:disabled, .remove-button:disabled, .primary-button:disabled { cursor: not-allowed; opacity: 0.5; }
+.add-admin { padding: var(--sp-5); border: 1px solid var(--color-border); background: var(--color-surface-2); margin-bottom: var(--sp-5); }
+label { display: block; margin-bottom: var(--sp-2); color: var(--color-text); font-size: var(--text-caption-1); font-weight: 500; }
+.add-admin__controls { display: flex; gap: var(--sp-3); }
+input { flex: 1; min-width: 0; height: 36px; padding: 0 var(--sp-3); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-caption-1); }
+input:focus { outline: 1px solid var(--color-border-focus); border-color: var(--color-border-focus); }
+.primary-button { display: inline-flex; align-items: center; gap: var(--sp-2); height: 36px; padding: 0 var(--sp-5); border: 0; background: var(--color-highlight); color: var(--color-btn-primary-text); cursor: pointer; font-family: var(--font-body); font-size: var(--text-caption-1); font-weight: 500; white-space: nowrap; }
+.add-admin__helper { margin-top: var(--sp-2); }
+.message { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4); border-left: 3px solid; }
+.message--error { border-color: var(--color-error); background: var(--color-error-subtle); color: var(--color-error); }
+.message--success { border-color: var(--color-success); background: var(--color-success-subtle); color: var(--color-success); }
+.admin-list { border: 1px solid var(--color-border); background: var(--color-surface); }
+.admin-list__header, .admin-list__row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-4) var(--sp-5); }
+.admin-list__header { background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); color: var(--color-text-subtlest); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; }
+.admin-list__row { border-bottom: 1px solid var(--color-border-subtle); }
+.admin-list__row:last-child { border-bottom: 0; }
+.admin-list__identity { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; color: var(--color-text); font-size: var(--text-caption-1); }
+.admin-list__identity > span:first-of-type { overflow-wrap: anywhere; }
+.super-admin-badge { padding: var(--sp-1) var(--sp-2); background: var(--color-highlight-subtle); color: var(--color-highlight); font-size: 0.75rem; white-space: nowrap; }
+.remove-button { gap: var(--sp-2); min-width: 88px; height: 32px; color: var(--color-error); }
+.admin-list__state { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); min-height: 104px; color: var(--color-text-subtlest); font-size: var(--text-caption-1); }
+@media (max-width: 600px) { .add-admin__controls { flex-direction: column; } .primary-button { justify-content: center; } .admin-list__row { align-items: flex-start; } .admin-list__identity { align-items: flex-start; } }

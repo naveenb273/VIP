@@ -1,18 +1,20 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { FormsModule } from '@angular/forms';
 import { Idea, Collaborator, AzureUser } from '../../models/idea.model';
 import { IdeaService } from '../../services/idea.service';
 import { NotificationService } from '../../services/notification.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-collaboration-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, IconComponent],
   templateUrl: './collaboration-panel.component.html',
   styleUrls: ['./collaboration-panel.component.scss']
 })
-export class CollaborationPanelComponent {
+export class CollaborationPanelComponent implements OnChanges {
   @Input({ required: true }) idea!: Idea;
   @Input() isOwner     = false;
   @Input() currentUser: AzureUser | null = null;
@@ -22,6 +24,7 @@ export class CollaborationPanelComponent {
   @Output() sendRequest     = new EventEmitter<void>();
 
   svc    = inject(IdeaService);
+  auth   = inject(AuthService);
   notifs = inject(NotificationService);
 
   activeTab: 'team' | 'requests' | 'notes' | 'connect' = 'team';
@@ -29,15 +32,52 @@ export class CollaborationPanelComponent {
   newNoteText = '';
   newCollab   = { name: '', email: '', role: 'Contributor' as 'Contributor' | 'Reviewer' };
 
-  get pendingRequests() { return this.idea.collaborationRequests.filter(r => r.status === 'pending'); }
-  get pinnedNotes()     { return this.idea.collaborationNotes.filter(n => n.pinned); }
-  get unpinnedNotes()   { return this.idea.collaborationNotes.filter(n => !n.pinned); }
+  get pendingRequests() { return this.idea.content.collaborationRequests.filter(r => r.status === 'pending'); }
+  get pinnedNotes()     { return this.idea.content.collaborationNotes.filter(n => n.pinned); }
+  get unpinnedNotes()   { return this.idea.content.collaborationNotes.filter(n => !n.pinned); }
+
+  get isCollaborator(): boolean {
+    const user = this.currentUser;
+    if (!user) {
+      return false;
+    }
+
+    const userEmail = user.email.toLowerCase();
+    return this.idea.collaboratorInformation.members.some(member =>
+      member.email.toLowerCase() === userEmail || member.id === userEmail || (!!member.objectId && member.objectId === user.id)
+    );
+  }
+
+  get canAccessNotes(): boolean {
+    return this.isOwner || this.isCollaborator || this.isAdminViewer;
+  }
+
+  get canAccessConnect(): boolean {
+    return this.isOwner || this.isCollaborator || this.isAdminViewer;
+  }
+
+  get isAdminViewer(): boolean {
+    return this.auth.isAdmin();
+  }
+
+  get isAdminOnlyAccess(): boolean {
+    return this.isAdminViewer && !this.isOwner && !this.isCollaborator;
+  }
+
+  ngOnChanges(): void {
+    if (!this.canAccessNotes && this.activeTab === 'notes') {
+      this.activeTab = 'team';
+    }
+    if (!this.canAccessConnect && this.activeTab === 'connect') {
+      this.activeTab = 'team';
+    }
+  }
 
   // ── Team ───────────────────────────────────────────────────────────────────
   async submitCollaborator(): Promise<void> {
     if (!this.newCollab.name.trim()) return;
     const initials = this.newCollab.name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const colors   = ['#003057','#1c4f82','#1a6496','#2e7d8a','#5d4a9c','#8b3a5a','#1a5c3f'];
+    const colors   = ['#141414','#575757','#87754e','#146ad1','#009bbe','#00820d','#ae9871'];
     const color    = colors[Math.floor(Math.random() * colors.length)];
     await this.svc.addCollaborator(this.idea.id, {
       name: this.newCollab.name.trim(), email: this.newCollab.email.trim(),
@@ -63,14 +103,14 @@ export class CollaborationPanelComponent {
    */
   private sendCollaboratorEmail(name: string, email: string, role: string): void {
     const ownerName = this.currentUser?.name ?? 'The idea owner';
-    const subject   = encodeURIComponent(`[VIP] You've been added as a collaborator — "${this.idea.title}"`);
+    const subject   = encodeURIComponent(`[VIP] You've been added as a collaborator — "${this.idea.ideaInformation.title}"`);
     const body      = encodeURIComponent(
       `Hi ${name},\n\n` +
       `${ownerName} has added you as a ${role} on the following idea in VIP:\n\n` +
-      `Idea: ${this.idea.title}\n` +
+      `Idea: ${this.idea.ideaInformation.title}\n` +
       `Role: ${role}\n\n` +
-      `About this idea:\n${this.idea.description}\n\n` +
-      `Tags: ${this.idea.tags.join(', ')}\n\n` +
+      `About this idea:\n${this.idea.ideaInformation.description}\n\n` +
+      `Tags: ${this.idea.ideaInformation.tags.join(', ')}\n\n` +
       `You can view and collaborate on this idea by opening VIP.\n\n` +
       `Best regards,\n${ownerName}`
     );
@@ -86,7 +126,7 @@ export class CollaborationPanelComponent {
 
   // ── Requests ───────────────────────────────────────────────────────────────
   async respondRequest(reqId: string, status: 'accepted' | 'declined'): Promise<void> {
-    const req = this.idea.collaborationRequests.find(r => r.id === reqId);
+    const req = this.idea.content.collaborationRequests.find(r => r.id === reqId);
     await this.svc.respondToRequest(this.idea.id, reqId, status);
 
     if (req) {
@@ -95,13 +135,13 @@ export class CollaborationPanelComponent {
         type: status === 'accepted' ? 'collab_accepted' : 'collab_declined',
         title: status === 'accepted' ? 'Collaboration Accepted!' : 'Collaboration Declined',
         message: status === 'accepted'
-          ? `Your request to collaborate on "${this.idea.title}" was accepted`
-          : `Your request to collaborate on "${this.idea.title}" was declined`,
-        ideaId: this.idea.id, ideaTitle: this.idea.title,
+          ? `Your request to collaborate on "${this.idea.ideaInformation.title}" was accepted`
+          : `Your request to collaborate on "${this.idea.ideaInformation.title}" was declined`,
+        ideaId: this.idea.id, ideaTitle: this.idea.ideaInformation.title,
         fromUser: this.currentUser?.name, fromAvatar: req.requesterAvatar, fromAvatarColor: req.requesterAvatarColor
       });
       // Email notification to the requester
-      this.sendRequestResponseEmail(req.requesterName, status, this.idea.title);
+      this.sendRequestResponseEmail(req.requesterName, status, this.idea.ideaInformation.title);
     }
   }
 
@@ -137,34 +177,43 @@ export class CollaborationPanelComponent {
   // ── Deep links ─────────────────────────────────────────────────────────────
   getTeamsLink(c: Collaborator): string {
     if (!c.email) return 'https://teams.microsoft.com/';
-    return `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(c.email)}&message=${encodeURIComponent('Hey! Wanted to discuss the idea: ' + this.idea.title)}`;
+    return `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(c.email)}&message=${encodeURIComponent('Hey! Wanted to discuss the idea: ' + this.idea.ideaInformation.title)}`;
   }
 
   getOutlookLink(c: Collaborator): string {
-    const subject = encodeURIComponent(`[VIP] ${this.idea.title}`);
-    const body    = encodeURIComponent(`Hi ${c.name},\n\nI'd like to collaborate on: "${this.idea.title}".\n\n${this.idea.description}\n\nLooking forward to your thoughts!`);
-    return c.email
-      ? `mailto:${c.email}?subject=${subject}&body=${body}`
-      : `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${body}`;
+    const subject = encodeURIComponent(`[VIP] ${this.idea.ideaInformation.title}`);
+    const body    = encodeURIComponent(`Hi ${c.name},\n\nI'd like to collaborate on: "${this.idea.ideaInformation.title}".\n\n${this.idea.ideaInformation.description}\n\nLooking forward to your thoughts!`);
+    return `mailto:${c.email ?? ''}?subject=${subject}&body=${body}`;
   }
 
   getTeamsShareLink(): string {
-    const msg = encodeURIComponent(`Check out this idea on VIP: "${this.idea.title}" — ${this.idea.description.slice(0, 120)}...`);
-    return `https://teams.microsoft.com/l/chat/0/0?message=${msg}`;
+    const msg = encodeURIComponent(`Check out this idea on VIP: "${this.idea.ideaInformation.title}" — ${this.idea.ideaInformation.description.slice(0, 120)}...`);
+    const emails = [...new Set(
+      this.idea.collaboratorInformation.members
+        .map(c => c.email?.trim().toLowerCase())
+        .filter((email): email is string => !!email)
+    )];
+
+    if (emails.length === 0) {
+      return `https://teams.microsoft.com/l/chat/0/0?message=${msg}`;
+    }
+
+    // Teams only honours topicName once the chat has 3+ participants (a group chat).
+    const users = emails.map(encodeURIComponent).join(',');
+    const topicName = encodeURIComponent(`VIP · ${this.idea.ideaInformation.title}`);
+    return `https://teams.microsoft.com/l/chat/0/0?users=${users}&topicName=${topicName}&message=${msg}`;
   }
 
   getOutlookShareLink(): string {
-    const subject = encodeURIComponent(`[VIP] ${this.idea.title}`);
-    const body    = encodeURIComponent(`Hi,\n\nSharing an idea:\n\nTitle: ${this.idea.title}\n\n${this.idea.description}\n\nTags: ${this.idea.tags.join(', ')}`);
-    return `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${body}`;
+    const subject = encodeURIComponent(`[VIP] ${this.idea.ideaInformation.title}`);
+    const body    = encodeURIComponent(`Hi,\n\nSharing an idea:\n\nTitle: ${this.idea.ideaInformation.title}\n\n${this.idea.ideaInformation.description}\n\nTags: ${this.idea.ideaInformation.tags.join(', ')}`);
+    return `mailto:?subject=${subject}&body=${body}`;
   }
 
   getTeamEmailLink(): string {
-    const emails  = this.idea.collaborators.filter(c => c.email).map(c => c.email).join(';');
-    const subject = encodeURIComponent(`[VIP] Team Update: ${this.idea.title}`);
-    const body    = encodeURIComponent(`Hi Team,\n\nUpdate on: ${this.idea.title}\nCollaborators: ${this.idea.collaborators.map(c => c.name).join(', ')}\n\n${this.idea.description}`);
-    return emails
-      ? `mailto:${emails}?subject=${subject}&body=${body}`
-      : `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${body}`;
+    const emails  = this.idea.collaboratorInformation.members.filter(c => c.email).map(c => c.email).join(';');
+    const subject = encodeURIComponent(`[VIP] Team Update: ${this.idea.ideaInformation.title}`);
+    const body    = encodeURIComponent(`Hi Team,\n\nUpdate on: ${this.idea.ideaInformation.title}\nCollaborators: ${this.idea.collaboratorInformation.members.map(c => c.name).join(', ')}\n\n${this.idea.ideaInformation.description}`);
+    return `mailto:${emails}?subject=${subject}&body=${body}`;
   }
 }

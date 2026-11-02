@@ -7,7 +7,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const DB_PATH = join(__dirname, 'db.json');
 
 export function readDb() {
-  return JSON.parse(readFileSync(DB_PATH, 'utf-8'));
+  const raw = readFileSync(DB_PATH, 'utf-8');
+  // Tolerate accidental UTF-8 BOM so route handlers do not fail with 500.
+  const normalized = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  return JSON.parse(normalized);
 }
 
 export function writeDb(data) {

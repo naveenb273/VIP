@@ -1,0 +1,41 @@
+# Shared .NET Build Template
+# Reusable template for building .NET applications
+
+parameters:
+  - name: workingDirectory
+    type: string
+    default: 'src/HackspaceDotnet'
+  - name: dotnetVersion
+    type: string
+    default: '9.x'
+  - name: buildConfiguration
+    type: string
+    default: 'Release'
+  - name: artifactName
+    type: string
+    default: 'App'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET ${{ parameters.dotnetVersion }}'
+    inputs:
+      version: '${{ parameters.dotnetVersion }}'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build'
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+      command: 'build'
+      arguments: '--configuration ${{ parameters.buildConfiguration }}'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet publish'
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+      command: publish
+      publishWebProjects: True
+      arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(Build.ArtifactStagingDirectory)'
+      zipAfterPublish: True
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{ parameters.artifactName }}

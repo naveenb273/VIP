@@ -3,6 +3,7 @@ import {
   HostListener, OnDestroy, ChangeDetectionStrategy, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 
 /**
  * CoverPositionerComponent
@@ -19,7 +20,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-cover-positioner',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IconComponent],
   templateUrl: './cover-positioner.component.html',
   styleUrls: ['./cover-positioner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

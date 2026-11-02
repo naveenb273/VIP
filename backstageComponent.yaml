@@ -1,0 +1,31 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: hckcalmridge28
+  annotations:
+    dev.azure.com/build-definition: "cicd-hckcalmridge28"
+    dev.azure.com/host-org: dev.azure.com/FPC-Department
+    dev.azure.com/project: "DevSecOpsPlatform-SoftwareTemplates-Sandbox"
+    backstage.io/techdocs-ref: dir:./techDocs
+  description: "VIP — Volvo Ideas Platform. Angular 19 + Express REST API. Hackspace."
+  labels:
+    volvo.com/APMID: "149574"
+    volvo.com/applicability: ""
+  tags:
+    - javascript
+    - angular
+    - express
+    - nodejs
+    - vgds
+  links:
+    - url: https://portal.azure.com/#@volvogroup.onmicrosoft.com/resource/subscriptions/445b0818-90bc-4af0-911a-c61f511c7693/resourceGroups
+      title: Azure Resource Group
+    - url: https://dev.azure.com/FPC-Department/DevSecOpsPlatform-SoftwareTemplates-Sandbox/_build?definitionScope=%5Chckcalmridge28
+      title: Azure DevOps pipeline
+    - url: https://asdevhckcalmridge28.azurewebsites.net
+      title: Hackspace Web App
+spec:
+  type: service
+  owner: group:default/GoldenPath
+  lifecycle: appointed
+  subcomponentOf: component:default/all-hackspaces

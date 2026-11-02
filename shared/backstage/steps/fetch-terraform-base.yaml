@@ -1,0 +1,10 @@
+id: fetch-terraform-base
+name: Fetch Terraform Base Files
+action: fetch:template
+input:
+  url: ../shared/terraform/base
+  targetPath: ./terraform
+  copyWithoutTemplating:
+    - '**/*'
+  values:
+    name: ${{ parameters.name }}

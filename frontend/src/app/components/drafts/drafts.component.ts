@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../shared/icon/icon.component';
 import { Router } from '@angular/router';
 import { IdeaService } from '../../services/idea.service';
 import { AuthService } from '../../services/auth.service';
@@ -11,7 +12,7 @@ const MAX_DRAFTS = 5;
 @Component({
   selector: 'app-drafts',
   standalone: true,
-  imports: [CommonModule, EditDraftModalComponent],
+  imports: [CommonModule, EditDraftModalComponent, IconComponent],
   templateUrl: './drafts.component.html',
   styleUrls: ['./drafts.component.scss']
 })

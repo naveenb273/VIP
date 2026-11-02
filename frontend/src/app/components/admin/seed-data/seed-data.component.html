@@ -1,0 +1,254 @@
+<div class="seed-page">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <div class="seed-header">
+    <div class="seed-header__left">
+      <div class="admin-badge">
+        <app-icon name="shield" size="12" />
+        Admin
+      </div>
+      <h1 class="seed-header__title">Seed Data</h1>
+      <p class="seed-header__sub">
+        Manage the application database · {{ rawData().length }} records total
+      </p>
+    </div>
+    <div class="seed-header__actions">
+      <!-- Upload -->
+      <label class="btn-secondary" [class.btn--loading]="uploading()" title="Upload db.json">
+        <input type="file" accept=".json" (change)="onFileSelected($event)" style="display:none" [disabled]="uploading()"/>
+        @if (uploading()) {
+          <app-icon name="spinner" size="14" spin />
+          Uploading…
+        } @else {
+          <app-icon name="upload-cloud" size="14" />
+          Upload JSON
+        }
+      </label>
+      <!-- Download -->
+      <button class="btn-secondary" (click)="download()" title="Download db.json">
+        <app-icon name="download-cloud" size="14" />
+        Download JSON
+      </button>
+      <!-- Refresh -->
+      <button class="btn-secondary" (click)="loadData()" [disabled]="loading()" title="Refresh">
+        <app-icon name="refresh" size="14" [spin]="loading()" />
+        Refresh
+      </button>
+      <!-- Clear -->
+      <button class="btn-danger" (click)="confirmClear()" [disabled]="clearing() || rawData().length === 0">
+        <app-icon name="trash" size="14" />
+        @if (clearing()) { Clearing… } @else { Clear All Data }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Messages ─────────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="msg msg--error">
+      <app-icon name="alert-circle" size="14" />
+      {{ error() }}
+      <button class="msg__close" (click)="error.set('')">×</button>
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="msg msg--success">
+      <app-icon name="check" size="14" />
+      {{ successMsg() }}
+    </div>
+  }
+
+  <!-- ── Tab switcher ──────────────────────────────────────────────────────── -->
+  <div class="seed-tabs">
+    <button class="seed-tab" [class.seed-tab--active]="activeTab()==='table'" (click)="activeTab.set('table')">
+      <app-icon name="table" size="13" />
+      Table View
+    </button>
+    <button class="seed-tab" [class.seed-tab--active]="activeTab()==='json'" (click)="activeTab.set('json')">
+      <app-icon name="code" size="13" />
+      JSON View
+    </button>
+  </div>
+
+  <!-- ════════════════ TABLE VIEW ════════════════ -->
+  @if (activeTab() === 'table') {
+    <!-- Toolbar -->
+    <div class="table-toolbar">
+      <!-- Search -->
+      <div class="toolbar-search">
+        <app-icon name="search" size="14" class="toolbar-search__icon" />
+        <input [value]="searchQuery()" (input)="onSearch($any($event.target).value)"
+          placeholder="Search ideas, authors, tags, status…" class="toolbar-search__input"/>
+        @if (searchQuery()) {
+          <button class="toolbar-search__clear" (click)="onSearch('')">×</button>
+        }
+      </div>
+
+      <div class="toolbar-right">
+        <!-- Page size -->
+        <div class="toolbar-pagesize">
+          <span class="toolbar-label">Rows</span>
+          <select [value]="pageSize()" (change)="onPageSizeChange(+$any($event.target).value)" class="toolbar-select">
+            @for (s of pageSizeOptions; track s) {
+              <option [value]="s" [selected]="s === pageSize()">{{ s }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Column chooser -->
+        <div class="col-chooser-wrap">
+          <button class="btn-secondary btn-secondary--sm" (click)="showColChooser.set(!showColChooser())">
+            <app-icon name="list" size="13" />
+            Columns
+          </button>
+          @if (showColChooser()) {
+            <div class="col-chooser">
+              <div class="col-chooser__header">
+                <span class="col-chooser__title">Choose Columns</span>
+                <button class="col-chooser__reset" (click)="resetCols()">Reset</button>
+              </div>
+              <div class="col-chooser__list">
+                @for (col of columns(); track col.key) {
+                  <label class="col-chooser__item">
+                    <input type="checkbox" [checked]="col.visible" (change)="toggleCol(col)" class="col-chooser__cb"/>
+                    {{ col.label }}
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Results count -->
+        <span class="toolbar-count">
+          @if (searchQuery()) {
+            {{ sorted().length }} of {{ rawData().length }} records
+          } @else {
+            {{ rawData().length }} records
+          }
+        </span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    @if (loading()) {
+      <div class="table-loading">
+        <app-icon name="spinner" size="24" spin />
+        Loading data…
+      </div>
+    } @else if (rawData().length === 0) {
+      <div class="table-empty">
+        <div class="table-empty__icon">🗄️</div>
+        <p class="table-empty__title">No seed data</p>
+        <p class="table-empty__sub">Upload a db.json file to populate the database.</p>
+      </div>
+    } @else if (sorted().length === 0) {
+      <div class="table-empty">
+        <div class="table-empty__icon">🔍</div>
+        <p class="table-empty__title">No results</p>
+        <p class="table-empty__sub">No records match "{{ searchQuery() }}"</p>
+        <button class="btn-secondary btn-secondary--sm" (click)="onSearch('')">Clear search</button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              @for (col of visibleCols(); track col.key) {
+                <th [style.min-width]="col.width" [class.sortable]="col.sortable" (click)="col.sortable && setSort(col.key)">
+                  <span class="th-inner">
+                    {{ col.label }}
+                    @if (col.sortable) {
+                      <span class="sort-icon" [class.sort-icon--active]="sortKey() === col.key">
+                        {{ sortIcon(col.key) }}
+                      </span>
+                    }
+                  </span>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of paged(); track row.id; let i = $index) {
+              <tr class="data-row">
+                <td class="col-num">{{ startIdx() + i }}</td>
+                @for (col of visibleCols(); track col.key) {
+                  <td [class.col-status]="col.key === 'status'">
+                    @if (col.key === 'status') {
+                      <span class="status-badge" [class]="'status-badge ' + statusClass(row)">
+                        {{ row.ideaInformation?.status ?? 'published' }}
+                      </span>
+                    } @else if (col.key === 'title') {
+                      <span class="cell-title">{{ cellDisplay(col, row) }}</span>
+                    } @else if (col.key === 'tags') {
+                      <span class="cell-tags">{{ cellDisplay(col, row) }}</span>
+                    } @else {
+                      {{ cellDisplay(col, row) }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <app-shared-pagination
+        [totalItems]="sorted().length"
+        [itemLabel]="'records'"
+        [currentPage]="currentPage()"
+        [totalPages]="totalPages()"
+        [rangeStart]="startIdx()"
+        [rangeEnd]="endIdx()"
+        [pages]="visiblePages()"
+        [jumpPage]="jumpPage()"
+        (first)="goFirst()"
+        (prev)="previousPage()"
+        (pageSelect)="setPage($event)"
+        (next)="nextPage()"
+        (last)="goLast()"
+        (jumpPageChange)="onJumpPageChange($event)"
+        (jumpSubmit)="submitJump()"
+      />
+    }
+  }
+
+  <!-- ════════════════ JSON VIEW ════════════════ -->
+  @if (activeTab() === 'json') {
+    <div class="json-view">
+      <div class="json-view__toolbar">
+        <span class="toolbar-label">{{ rawData().length }} records · read-only preview</span>
+        <button class="btn-secondary btn-secondary--sm" (click)="download()">
+          <app-icon name="download-cloud" size="12" />
+          Download
+        </button>
+      </div>
+      <pre class="json-pre">{{ jsonPreview }}</pre>
+    </div>
+  }
+
+</div>
+
+<!-- ── Clear Confirmation Dialog ──────────────────────────────────────────── -->
+@if (showClearConfirm()) {
+  <div class="dialog-overlay">
+    <div class="dialog">
+      <div class="dialog__icon">
+        <app-icon name="alert-circle" size="28" />
+      </div>
+      <h2 class="dialog__title">Clear all seed data?</h2>
+      <p class="dialog__body">
+        This will permanently delete all <strong>{{ rawData().length }} ideas</strong> and reactions from the database.
+        This action cannot be undone.
+      </p>
+      <div class="dialog__footer">
+        <button class="btn-secondary" (click)="cancelClear()">Cancel</button>
+        <button class="btn-danger" (click)="executeClear()">
+          <app-icon name="trash" size="14" />
+          Yes, clear everything
+        </button>
+      </div>
+    </div>
+  </div>
+}

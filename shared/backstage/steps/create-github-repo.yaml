@@ -1,0 +1,10 @@
+id: createGithubRepo
+name: Create GitHub repo
+action: publish:github
+input:
+  description: Hackspace ${{ parameters.name }}
+  repoUrl: github.com?owner=volvogroup-internal&repo=${{ parameters.name }}
+  access: "volvogroup-internal/gpsandbox"
+  defaultBranch: main
+  protectDefaultBranch: false
+  token: ${{ secrets.githubToken }}

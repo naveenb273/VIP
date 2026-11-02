@@ -1,0 +1,55 @@
+<section class="access-page">
+  <header class="access-page__header">
+    <div>
+      <h2>Admin Access</h2>
+      <p>Manage users who can access administrative tools.</p>
+    </div>
+    <button class="refresh-button" type="button" (click)="loadAdmins()" [disabled]="loading()" title="Refresh administrators">
+      <app-icon name="refresh" size="15" [spin]="loading()" />
+    </button>
+  </header>
+
+  <form class="add-admin" (ngSubmit)="addAdmin()">
+    <label for="admin-email">Email address</label>
+    <div class="add-admin__controls">
+      <input id="admin-email" name="email" type="email" [(ngModel)]="email" placeholder="name@volvo.com" [disabled]="saving()" />
+      <button class="primary-button" type="submit" [disabled]="saving()">
+        <app-icon name="user-plus" size="15" />
+        @if (saving()) { Adding } @else { Add administrator }
+      </button>
+    </div>
+    <p class="add-admin__helper">The user can access both Admin sections after signing in again.</p>
+  </form>
+
+  @if (error()) {
+    <p class="message message--error" role="alert"><app-icon name="alert-circle" size="15" /> {{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="message message--success"><app-icon name="check" size="15" /> {{ success() }}</p>
+  }
+
+  <div class="admin-list" [attr.aria-busy]="loading()">
+    <div class="admin-list__header"><span>Administrators</span><span>{{ admins().length }}</span></div>
+    @if (loading()) {
+      <div class="admin-list__state"><app-icon name="spinner" size="20" spin /> Loading administrators</div>
+    } @else {
+      @for (admin of admins(); track admin.email) {
+        <div class="admin-list__row">
+          <div class="admin-list__identity">
+            <app-icon name="shield" size="17" />
+            <span>{{ admin.email }}</span>
+            @if (admin.isSuperAdmin) { <span class="super-admin-badge">Super admin</span> }
+          </div>
+          @if (!admin.isSuperAdmin) {
+            <button class="remove-button" type="button" (click)="removeAdmin(admin)" [disabled]="removingEmail() === admin.email">
+              <app-icon name="trash" size="14" />
+              @if (removingEmail() === admin.email) { Removing } @else { Remove }
+            </button>
+          }
+        </div>
+      } @empty {
+        <div class="admin-list__state">No administrators found</div>
+      }
+    }
+  </div>
+</section>

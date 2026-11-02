@@ -1,0 +1,21 @@
+.home-sidebar {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  padding: var(--sp-5);
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--sp-5));
+}
+
+.home-sidebar__title {
+  font-size: var(--text-subtitle-1);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--sp-5);
+}
+
+@media (max-width: 960px) {
+  .home-sidebar {
+    position: static;
+  }
+}

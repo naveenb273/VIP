@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "workbench.startupEditor": "readme",
+    "explorer.sortOrder": "type",
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+      "package.json": "tsconfig*, vite.config.*, .prettier*, .editorconfig, .npmrc, .gitignore, skills-lock.json, package-lock.json"
+    }
+  }
+}

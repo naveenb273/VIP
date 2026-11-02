@@ -2,9 +2,7 @@
   <div class="detail">
     <!-- Back -->
     <button class="btn-back" (click)="goBack()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-      </svg>
+      <app-icon name="arrow-left" size="18" />
       Back to Ideas
     </button>
 
@@ -15,9 +13,9 @@
         <!-- Main card -->
         <div class="detail-card">
           <!-- Cover Image -->
-          @if (currentIdea()!.coverImage) {
-            <img [src]="currentIdea()!.coverImage" alt="cover" class="detail-cover-img"
-                 [style.object-position]="currentIdea()!.coverPosition || '50% 50%'"/>
+          @if (currentIdea()!.ideaInformation.coverImage) {
+            <img [src]="currentIdea()!.ideaInformation.coverImage" alt="cover" class="detail-cover-img"
+                 [style.object-position]="currentIdea()!.ideaInformation.coverPosition || '50% 50%'"/>
           } @else {
             <div class="detail-cover-placeholder">
               <span class="detail-cover-emoji">{{ coverEmoji() }}</span>
@@ -25,43 +23,38 @@
           }
           <!-- Header row: title + save + edit -->
           <div class="detail-card__header">
-            <h1 class="detail-card__title">{{ currentIdea()!.title }}</h1>
+            <h1 class="detail-card__title">{{ currentIdea()!.ideaInformation.title }}</h1>
             <div class="detail-card__header-actions">
               @if (isOwner()) {
                 <button class="btn-edit" (click)="showEdit = true" title="Edit this idea">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
+                  <app-icon name="edit" size="14" />
                   Edit
                 </button>
               }
               <button class="btn-save" [class.btn-save--active]="svc.isFavorited(currentIdea()!.id)" (click)="svc.toggleFavorite(currentIdea()!.id)">
-                <svg width="14" height="14" viewBox="0 0 24 24" [attr.fill]="svc.isFavorited(currentIdea()!.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
+                <app-icon [name]="svc.isFavorited(currentIdea()!.id) ? 'star-filled' : 'star'" size="14" />
                 {{ svc.isFavorited(currentIdea()!.id) ? 'Saved' : 'Save' }}
               </button>
             </div>
           </div>
 
-          <p class="detail-card__desc">{{ currentIdea()!.description }}</p>
+          <p class="detail-card__desc">{{ currentIdea()!.ideaInformation.description }}</p>
 
-          @if (currentIdea()!.tags.length > 0) {
+          @if (currentIdea()!.ideaInformation.tags.length > 0) {
             <div class="detail-card__tags">
-              @for (tag of currentIdea()!.tags; track tag) {
+              @for (tag of currentIdea()!.ideaInformation.tags; track tag) {
                 <span class="tag" [ngClass]="'tag--' + tag.toLowerCase()">{{ tag }}</span>
               }
             </div>
           }
 
           <div class="detail-card__author">
-            <div class="avatar" [style.background]="currentIdea()!.avatarColor" [style.width.px]="44" [style.height.px]="44" [style.fontSize.px]="15">
-              {{ currentIdea()!.avatar }}
+            <div class="avatar" [style.background]="currentIdea()!.authorInformation.avatarColor" [style.width.px]="44" [style.height.px]="44" [style.fontSize.px]="15">
+              {{ currentIdea()!.authorInformation.avatar }}
             </div>
             <div>
-              <div class="detail-card__author-name">{{ currentIdea()!.author }}</div>
-              <div class="detail-card__author-date">Posted on {{ currentIdea()!.date | date:'MMM d, y' }}</div>
+              <div class="detail-card__author-name">{{ currentIdea()!.authorInformation.name }}</div>
+              <div class="detail-card__author-date">Posted on {{ currentIdea()!.audit.createdDate | date:'MMM d, y' }}</div>
             </div>
           </div>
 
@@ -72,9 +65,7 @@
               @if (isOwner()) {
                 <label class="btn-upload" title="Upload file (max 5 MB)">
                   <input type="file" multiple (change)="onFileSelected($event)" style="display:none" accept="*/*"/>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
+                  <app-icon name="plus" size="13" />
                   Add File
                 </label>
               }
@@ -84,18 +75,16 @@
               <div class="upload-error">⚠️ {{ uploadError }}</div>
             }
 
-            @if (currentIdea()!.attachments.length === 0) {
+            @if (currentIdea()!.content.attachments.length === 0) {
               <div class="attachments-empty">No attachments yet.</div>
             } @else {
               <div class="attachments-list">
-                @for (att of currentIdea()!.attachments; track att.id) {
+                @for (att of currentIdea()!.content.attachments; track att.id) {
                   <div class="attachment-chip">
                     @if (isImage(att.type)) {
                       <img [src]="att.dataUrl" [alt]="att.name" class="attachment-thumb"/>
                     } @else {
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                      </svg>
+                      <app-icon name="paperclip" size="14" />
                     }
                     <div class="attachment-chip__info">
                       <a [href]="att.dataUrl" [download]="att.name" class="attachment-chip__name">{{ att.name }}</a>
@@ -103,9 +92,7 @@
                     </div>
                     @if (isOwner()) {
                       <button class="attachment-chip__remove" (click)="removeAttachment(att.id)" title="Remove">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+                        <app-icon name="close" size="12" />
                       </button>
                     }
                   </div>
@@ -119,17 +106,12 @@
           <!-- Actions bar -->
           <div class="detail-card__actions">
             <button class="detail-action-btn" [class.detail-action-btn--liked]="svc.isLiked(currentIdea()!.id)" (click)="svc.toggleLike(currentIdea()!.id)">
-              <svg width="17" height="17" viewBox="0 0 24 24" [attr.fill]="svc.isLiked(currentIdea()!.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              {{ currentIdea()!.likes }} Likes
+              <app-icon [name]="svc.isLiked(currentIdea()!.id) ? 'heart-filled' : 'heart'" size="17" />
+              {{ currentIdea()!.engagement.likes }} Likes
             </button>
-            <button class="detail-action-btn" [class.detail-action-btn--shared]="shareFlash" (click)="onShare()">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-              {{ currentIdea()!.shares }} Shares
+            <button type="button" class="detail-action-btn" [class.detail-action-btn--shared]="shareFlash" (click)="onShare()">
+              <app-icon name="share" size="17" />
+              {{ currentIdea()!.engagement.shares }} Shares
             </button>
           </div>
         </div>
@@ -137,7 +119,7 @@
         <!-- Comments -->
         <div class="comments-card">
           <h2 class="comments-card__title">
-            {{ currentIdea()!.comments.length }} Comment{{ currentIdea()!.comments.length !== 1 ? 's' : '' }}
+            {{ currentIdea()!.content.comments.length }} Comment{{ currentIdea()!.content.comments.length !== 1 ? 's' : '' }}
           </h2>
           <div class="comment-input-row">
             <div class="avatar" [style.background]="auth.currentUser()?.avatarColor || '#003057'" style="width:36px;height:36px;font-size:13px;">
@@ -148,19 +130,17 @@
                 rows="3" class="comment-textarea" (keydown)="onKeydown($event)"></textarea>
               <div class="comment-input-footer">
                 <button class="btn-post-comment" [disabled]="!newComment.trim()" (click)="postComment()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                  </svg>
+                  <app-icon name="send" size="16" />
                   Post Comment
                 </button>
               </div>
             </div>
           </div>
-          @if (currentIdea()!.comments.length === 0) {
+          @if (currentIdea()!.content.comments.length === 0) {
             <div class="comments-empty">No comments yet — be the first to share your thoughts!</div>
           } @else {
             <div class="comments-list">
-              @for (comment of currentIdea()!.comments; track comment.id) {
+              @for (comment of currentIdea()!.content.comments; track comment.id) {
                 <div class="comment">
                   <div class="avatar" [style.background]="comment.avatarColor" style="width:36px;height:36px;font-size:13px;">{{ comment.avatar }}</div>
                   <div class="comment__body">
@@ -188,19 +168,23 @@
           (sendRequest)="sendCollabRequest()"
         />
 
-        <!-- VGPatent link — visible to owner or any collaborator only -->
-        @if (isOwnerOrCollaborator()) {
+        <!-- VGPatent link — visible to owner/collaborator/admin -->
+        @if (canAccessPatent()) {
           <div class="vgpatent-card">
             <div class="vgpatent-card__icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9 9h1.5a1.5 1.5 0 0 1 0 3H9v3"/>
-                <path d="M9 9v6"/>
-              </svg>
+              <app-icon name="patent" size="22" />
             </div>
             <div class="vgpatent-card__body">
-              <div class="vgpatent-card__label">Patent Check</div>
+              <div class="vgpatent-card__label-row">
+                <div class="vgpatent-card__label">Patent Check</div>
+                @if (patentAdminView()) {
+                  <span class="vgpatent-card__access">A</span>
+                }
+              </div>
               <div class="vgpatent-card__title">Search in VGPatent</div>
+              @if (patentAdminView()) {
+                <div class="vgpatent-card__hint">Admin view: You can see this section because you are an admin.</div>
+              }
               <p class="vgpatent-card__sub">
                 Check if a patent already exists for this concept before you proceed further.
               </p>
@@ -210,14 +194,9 @@
                 rel="noopener noreferrer"
                 class="vgpatent-btn"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
+                <app-icon name="search" size="14" />
                 Search VGPatent
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
+                <app-icon name="external-link" size="12" style="margin-left:2px" />
               </a>
             </div>
           </div>
@@ -229,6 +208,15 @@
   <!-- Edit modal -->
   @if (showEdit) {
     <app-edit-idea-modal [idea]="currentIdea()!" (close)="showEdit = false" />
+  }
+
+  @if (shareIdeaId()) {
+    <app-copy-link-modal
+      [heading]="'Share Idea'"
+      [link]="shareUrl()"
+      (copied)="onShareCopied()"
+      (close)="closeShareModal()"
+    />
   }
 
 } @else {

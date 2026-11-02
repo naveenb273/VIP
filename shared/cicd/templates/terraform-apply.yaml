@@ -1,0 +1,197 @@
+# Shared Terraform Apply Template
+# Reusable template for deploying infrastructure with Terraform
+
+parameters:
+  - name: workingDirectory
+    type: string
+    default: 'terraform'
+  - name: tfTokenVariable
+    type: string
+    default: 'TFC-TOKEN'
+  - name: microsoftProviderAuthSecret
+    type: string
+    default: '$(MICROSOFT_PROVIDER_AUTHENTICATION_SECRET)'
+  - name: prepareMonorepo
+    type: boolean
+    default: false
+  - name: workspaceName
+    type: string
+    default: ''
+  # Azure RM service connection (same SP as deploy). Terraform auth via addSpnToEnvironment — no ARM_* in variable groups.
+  - name: azureSubscription
+    type: string
+    default: '142964-Dev0d-dsoplatformsanbox'
+
+steps:
+  - pwsh: |
+      $sources = "$(Build.SourcesDirectory)"
+      $repoSeg = "$(Build.Repository.Name)" -Split '/' | Select-Object -Last 1
+      $workspaceName = '${{ parameters.workspaceName }}'.Trim()
+      if ([string]::IsNullOrWhiteSpace($workspaceName)) {
+          $repoName = $repoSeg
+          Write-Host "Using repository name for Terraform workspace: $repoName"
+      } else {
+          $repoName = $workspaceName
+          Write-Host "Using Terraform workspace name (template parameter): $repoName"
+      }
+
+      $hmValue = $env:ENABLE_HACKSPACE_MIGRATION
+      $enableHackspaceMigration = $false
+      if (-not [string]::IsNullOrWhiteSpace($hmValue)) {
+          $enableHackspaceMigration = $hmValue.Trim().ToLowerInvariant() -in @('true', '1', 'yes')
+      }
+
+      $tfNameFile = Join-Path $env:AGENT_TEMPDIRECTORY 'tf_workspace_app_name.txt'
+      Set-Content -LiteralPath $tfNameFile -Value $repoName -NoNewline
+
+      $migrationFlagFile = Join-Path $env:AGENT_TEMPDIRECTORY 'tf_enable_hackspace_migration.txt'
+      Set-Content -LiteralPath $migrationFlagFile -Value ($enableHackspaceMigration.ToString().ToLower()) -NoNewline
+
+      $prepareMonorepo = ('${{ parameters.prepareMonorepo }}'.ToLowerInvariant() -eq 'true')
+      if ($prepareMonorepo) {
+        Write-Host "Preparing monorepo Terraform copy (prepareMonorepo=$prepareMonorepo)."
+        & "$(Build.SourcesDirectory)/shared/cicd/scripts/prepare-terraform-monorepo.ps1" `
+          -SourcesDirectory $sources `
+          -WorkingDirectory "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+      }
+
+      (Get-Content tfcloud.tpl) -replace '###TERRAFORM_WORKSPACE_PLACEHOLDER###', $repoName | Set-Content ./tfcloud.tf
+      Get-Content ./tfcloud.tf
+    displayName: 'Prepare tfcloud.tf file'
+    workingDirectory: $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+    env:
+      ENABLE_HACKSPACE_MIGRATION: $(ENABLE_HACKSPACE_MIGRATION)
+
+  - task: AzureCLI@2
+    displayName: 'Terraform apply'
+    name: DeployTerraform
+    inputs:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      addSpnToEnvironment: true
+      inlineScript: |
+        Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+
+        Write-Host "AzureCLI service connection: ${{ parameters.azureSubscription }}"
+
+        $subscriptionId = $env:subscriptionId
+        if ([string]::IsNullOrWhiteSpace($subscriptionId)) {
+          $subscriptionId = $(az account show --query id --output tsv)
+        }
+
+        $env:ARM_CLIENT_ID = $env:servicePrincipalId
+        $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey
+        $env:ARM_TENANT_ID = $env:tenantId
+        $env:ARM_SUBSCRIPTION_ID = $subscriptionId
+
+        $azAccount = az account show | ConvertFrom-Json
+        Write-Host "Terraform Azure auth: subscription=$($env:ARM_SUBSCRIPTION_ID) ($($azAccount.name)) tenant=$($env:ARM_TENANT_ID)"
+
+        $tfNameFile = Join-Path $env:AGENT_TEMPDIRECTORY 'tf_workspace_app_name.txt'
+        if (-not (Test-Path -LiteralPath $tfNameFile)) {
+          Write-Error "Expected $tfNameFile from the prepare step; it was not found."
+          exit 1
+        }
+        $repoName = Get-Content -LiteralPath $tfNameFile -Raw
+
+        $migrationFlagFile = Join-Path $env:AGENT_TEMPDIRECTORY 'tf_enable_hackspace_migration.txt'
+        if (-not (Test-Path -LiteralPath $migrationFlagFile)) {
+          Write-Error "Expected $migrationFlagFile from the prepare step; it was not found."
+          exit 1
+        }
+        $enableHackspaceMigration = (Get-Content -LiteralPath $migrationFlagFile -Raw).Trim().ToLowerInvariant() -eq 'true'
+
+        terraform init
+
+        $msAuth = '${{ parameters.microsoftProviderAuthSecret }}'
+        $applyArgs = @(
+          'apply', '-auto-approve', '-input=false',
+          '-var', "app_name=$repoName"
+        )
+
+        if ($enableHackspaceMigration) {
+          Write-Host "##[section]Hackspace migration enabled."
+          $applyArgs += @('-var', 'enable_hackspace_migration=true')
+          $cv = '$(MIGRATION_CONNECTED_VNET_NAME)'
+          if (-not [string]::IsNullOrWhiteSpace($cv)) {
+            $applyArgs += @('-var', "connected_vnet_name=$cv")
+            Write-Host "Migration override: connected_vnet_name=$cv"
+          }
+          $cvrg = '$(MIGRATION_CONNECTED_VNET_RG_NAME)'
+          if (-not [string]::IsNullOrWhiteSpace($cvrg)) {
+            $applyArgs += @('-var', "connected_vnet_rg_name=$cvrg")
+            Write-Host "Migration override: connected_vnet_rg_name=$cvrg"
+          }
+          $sn = '$(MIGRATION_APPSERVICE_SUBNET_NAME)'
+          if (-not [string]::IsNullOrWhiteSpace($sn)) {
+            $applyArgs += @('-var', "appservice_subnet_name=$sn")
+            Write-Host "Migration override: appservice_subnet_name=$sn"
+          }
+          $psn = '$(MIGRATION_POSTGRES_SUBNET_NAME)'
+          if (-not [string]::IsNullOrWhiteSpace($psn)) {
+            $applyArgs += @('-var', "postgres_subnet_name=$psn")
+            Write-Host "Migration override: postgres_subnet_name=$psn"
+          }
+
+          $authClientId = $env:servicePrincipalId
+          if ([string]::IsNullOrWhiteSpace($authClientId)) {
+            Write-Error 'Hackspace migration requires an Azure RM service connection with a service principal (addSpnToEnvironment) for Easy Auth client ID.'
+            exit 1
+          }
+          if ([string]::IsNullOrWhiteSpace($msAuth) -or ($msAuth -eq 'FILL_IN')) {
+            $msAuth = $env:servicePrincipalKey
+          }
+          if ([string]::IsNullOrWhiteSpace($msAuth)) {
+            Write-Error 'Hackspace migration requires MICROSOFT_PROVIDER_AUTHENTICATION_SECRET in the cd-dev variable group, or a service connection that supplies servicePrincipalKey (same deployment SP used for Easy Auth).'
+            exit 1
+          }
+          $applyArgs += @('-var', "auth_client_id=$authClientId")
+          Write-Host "Migration Easy Auth: using deployment service principal client_id=$authClientId (tenant uses Terraform default)"
+        }
+
+        $applyArgs += @('-var', "microsoft_provider_auth_secret=$msAuth")
+
+        $sharedPlanId = "$env:TF_VAR_SHARED_APP_SERVICE_PLAN_ID"
+        $sharedPlanOk = (
+          -not [string]::IsNullOrWhiteSpace($sharedPlanId) -and
+          ($sharedPlanId -match '^/subscriptions/')
+        )
+
+        if ($enableHackspaceMigration) {
+          Write-Host "Hackspace migration: dedicated App Service Plan (SHARED_APP_SERVICE_PLAN_ID is not used)."
+        } elseif ($sharedPlanOk) {
+          $applyArgs += @('-var', "shared_app_service_plan_id=$sharedPlanId")
+          Write-Host "Using shared App Service Plan: $sharedPlanId"
+        }
+
+        $ga = $env:GEN_AI_API_KEY
+        if ($null -ne $ga) { $ga = $ga.Trim() }
+        $gaIsPlaceholder = (
+          [string]::IsNullOrWhiteSpace($ga) -or
+          ($ga -eq 'FILL_IN') -or
+          ($ga -match '^\$\([A-Za-z0-9_.]+\)$')
+        )
+        if (-not $gaIsPlaceholder) {
+          $applyArgs += @('-var', "gen_ai_api_key=$ga")
+          Write-Host "GEN_AI_API_KEY provided; using literal token and skipping gphackspaces Key Vault reference identity"
+        } elseif ($enableHackspaceMigration) {
+          Write-Host "Hackspace migration: GEN_AI_API_KEY not set — Terraform omits GenAI (no app setting, no Key Vault reference)."
+        } else {
+          Write-Host "GEN_AI_API_KEY not set; using gphackspaces Key Vault reference (requires shared sandbox identity)"
+        }
+
+        & terraform @applyArgs
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Terraform apply failed"
+          exit $LASTEXITCODE
+        }
+        $resourceGroupName = terraform output --raw resource_group_name
+        $webAppName = terraform output --raw web_app_name
+
+        Write-Host "##vso[task.setvariable variable=rg_name;isOutput=true]$resourceGroupName"
+        Write-Host "##vso[task.setvariable variable=web_app_name;isOutput=true]$webAppName"
+    env:
+      TF_TOKEN_app_terraform_io: $(${{ parameters.tfTokenVariable }})
+      GEN_AI_API_KEY: $(GEN_AI_API_KEY)

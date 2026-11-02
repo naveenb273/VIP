@@ -1,0 +1,7 @@
+id: deleteTemplateDefinition
+name: Delete Template Definition
+action: fs:delete
+input:
+  files:
+    - ./backstageTemplate.yaml
+    - ./backstageContent/catalog-info.yaml
